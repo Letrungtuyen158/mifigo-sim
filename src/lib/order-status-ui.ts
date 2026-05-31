@@ -1,6 +1,6 @@
-import type { OrderStatus } from "@/lib/types";
+import type { OrderStatus, PaymentStatus } from "@/lib/types";
 
-/** Badge: nền + chữ + viền nhẹ */
+/** Badge đơn hàng (`order.status`) */
 export const ORDER_STATUS_BADGE: Record<string, string> = {
   pending_payment:
     "bg-amber-50 text-amber-900 ring-amber-200/80",
@@ -16,53 +16,14 @@ export const ORDER_STATUS_BADGE: Record<string, string> = {
   draft: "bg-slate-100 text-slate-600 ring-slate-200/80",
 };
 
-/** Nút đổi trạng thái khi đang khớp đơn */
-export const ORDER_ACTION_ACTIVE: Record<string, string> = {
-  payment_review: "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25",
-  paid: "border-emerald-600 bg-emerald-600 text-white shadow-md shadow-emerald-600/25",
-  completed:
-    "border-violet-600 bg-violet-600 text-white shadow-md shadow-violet-600/25",
-  cancelled: "border-red-600 bg-red-600 text-white shadow-md shadow-red-600/25",
+/** Badge thanh toán (`order.paymentStatus`) */
+export const PAYMENT_STATUS_BADGE: Record<string, string> = {
+  unpaid: "bg-amber-50 text-amber-900 ring-amber-200/80",
+  pending_review: "bg-blue-50 text-blue-900 ring-blue-200/80",
+  paid: "bg-emerald-50 text-emerald-900 ring-emerald-200/80",
+  failed: "bg-red-50 text-red-900 ring-red-200/80",
+  refunded: "bg-slate-100 text-slate-700 ring-slate-200/80",
 };
-
-export const ORDER_ACTION_IDLE =
-  "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50";
-
-export interface OrderStatusAction {
-  key: OrderStatus;
-  label: string;
-  matches: OrderStatus[];
-}
-
-export const ORDER_STATUS_ACTIONS: OrderStatusAction[] = [
-  {
-    key: "payment_review",
-    label: "Chờ duyệt CK",
-    matches: ["payment_review"],
-  },
-  {
-    key: "paid",
-    label: "Đã thanh toán",
-    matches: ["paid", "processing"],
-  },
-  {
-    key: "completed",
-    label: "Hoàn tất",
-    matches: ["completed"],
-  },
-  {
-    key: "cancelled",
-    label: "Hủy",
-    matches: ["cancelled"],
-  },
-];
-
-export function isOrderActionActive(
-  orderStatus: OrderStatus,
-  action: OrderStatusAction
-) {
-  return action.matches.includes(orderStatus);
-}
 
 export function orderStatusBadgeClass(status: string) {
   return (
@@ -70,3 +31,79 @@ export function orderStatusBadgeClass(status: string) {
     "bg-slate-100 text-slate-700 ring-slate-200/80"
   );
 }
+
+export function paymentStatusBadgeClass(status: string) {
+  return (
+    PAYMENT_STATUS_BADGE[status] ??
+    "bg-slate-100 text-slate-700 ring-slate-200/80"
+  );
+}
+
+/** Có thể duyệt CK — POST approve-payment */
+export function canApprovePayment(order: {
+  status: OrderStatus;
+  paymentStatus?: PaymentStatus;
+}) {
+  if (order.paymentStatus === "paid") return false;
+  if (["completed", "cancelled", "refunded"].includes(order.status)) return false;
+  return (
+    order.paymentStatus === "pending_review" || order.status === "payment_review"
+  );
+}
+
+/** Hoàn tất đơn — PUT status completed */
+export function canCompleteOrder(order: {
+  status: OrderStatus;
+  paymentStatus?: PaymentStatus;
+}) {
+  return order.status === "processing" && order.paymentStatus === "paid";
+}
+
+/** Hủy đơn — PUT status cancelled */
+export function canCancelOrder(order: { status: OrderStatus }) {
+  return !["completed", "cancelled", "refunded"].includes(order.status);
+}
+
+export type AdminOrderQueue = "all" | "pending_review" | "processing" | "completed";
+
+export const ADMIN_ORDER_QUEUES: {
+  key: AdminOrderQueue;
+  label: string;
+  filters: Record<string, string>;
+}[] = [
+  { key: "all", label: "Tất cả", filters: {} },
+  {
+    key: "pending_review",
+    label: "Chờ duyệt CK",
+    filters: { paymentStatus: "pending_review" },
+  },
+  {
+    key: "processing",
+    label: "Đang xử lý",
+    filters: { status: "processing", paymentStatus: "paid" },
+  },
+  {
+    key: "completed",
+    label: "Hoàn tất",
+    filters: { status: "completed" },
+  },
+];
+
+export const ORDER_STATUS_FILTER_VALUES: (OrderStatus | "")[] = [
+  "",
+  "pending_payment",
+  "payment_review",
+  "processing",
+  "completed",
+  "cancelled",
+  "refunded",
+];
+
+export const PAYMENT_STATUS_FILTER_VALUES: (PaymentStatus | "")[] = [
+  "",
+  "unpaid",
+  "pending_review",
+  "paid",
+  "failed",
+  "refunded",
+];

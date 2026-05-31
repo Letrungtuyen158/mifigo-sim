@@ -82,6 +82,7 @@ export function mapOrderStatusFromApi(status?: string): OrderStatus {
     case "processing":
     case "completed":
     case "cancelled":
+    case "refunded":
       return status;
     default:
       return "pending_payment";
@@ -288,13 +289,16 @@ export function mapOrderFromApi(
   });
 
   const bankTransfer = (payment?.bankTransfer || {}) as MongoDoc;
-  const proof =
-    bankTransfer.transactionCode ||
-    bankTransfer.proofImageUrl ||
-    payment?.transactionCode ||
-    payment?.proofImageUrl ||
-    payment?.note ||
-    undefined;
+  const proofImageUrl = bankTransfer.proofImageUrl
+    ? String(bankTransfer.proofImageUrl)
+    : payment?.proofImageUrl
+      ? String(payment.proofImageUrl)
+      : undefined;
+  const transactionCode = bankTransfer.transactionCode
+    ? String(bankTransfer.transactionCode)
+    : payment?.transactionCode
+      ? String(payment.transactionCode)
+      : undefined;
 
   return {
     id: idOf(order),
@@ -307,12 +311,29 @@ export function mapOrderFromApi(
     subtotal: Number(order.subtotal || order.totalAmount || 0),
     total: Number(order.totalAmount || order.total || 0),
     status: mapOrderStatusFromApi(String(order.status || "")),
+    paymentStatus: order.paymentStatus
+      ? (String(order.paymentStatus) as Order["paymentStatus"])
+      : undefined,
+    channel: order.channel ? String(order.channel) : undefined,
     paymentNote: order.note ? String(order.note) : undefined,
-    paymentProof: proof ? String(proof) : undefined,
+    paymentProof: transactionCode,
+    proofImageUrl,
     billNote: order.staffNote ? String(order.staffNote) : undefined,
     createdAt: String(order.createdAt || new Date().toISOString()),
     updatedAt: String(order.updatedAt || new Date().toISOString()),
   };
+}
+
+export function mapOrderDetailFromApi(payload: {
+  order: MongoDoc;
+  items?: MongoDoc[];
+  payment?: MongoDoc | null;
+}) {
+  return mapOrderFromApi(
+    payload.order,
+    payload.items || [],
+    payload.payment || null
+  );
 }
 
 export function mapVnEsimFromApi(doc: MongoDoc): VnEsim {

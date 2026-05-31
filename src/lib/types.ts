@@ -10,7 +10,15 @@ export type OrderStatus =
   | "paid"
   | "processing"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "refunded";
+
+export type PaymentStatus =
+  | "unpaid"
+  | "pending_review"
+  | "paid"
+  | "failed"
+  | "refunded";
 
 export type VnEsimStatus = "available" | "reserved" | "sold";
 
@@ -81,8 +89,11 @@ export interface Order {
   subtotal: number;
   total: number;
   status: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  channel?: string;
   paymentNote?: string;
   paymentProof?: string;
+  proofImageUrl?: string;
   billNote?: string;
   createdAt: string;
   updatedAt: string;

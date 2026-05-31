@@ -39,6 +39,25 @@ export function formatOrderStatus(status: string): string {
       return "Hoàn tất";
     case "cancelled":
       return "Đã hủy";
+    case "refunded":
+      return "Đã hoàn tiền";
+    default:
+      return status;
+  }
+}
+
+export function formatPaymentStatus(status: string): string {
+  switch (status) {
+    case "unpaid":
+      return "Chưa thanh toán";
+    case "pending_review":
+      return "Chờ duyệt CK";
+    case "paid":
+      return "Đã thanh toán";
+    case "failed":
+      return "Thanh toán thất bại";
+    case "refunded":
+      return "Đã hoàn tiền";
     default:
       return status;
   }
