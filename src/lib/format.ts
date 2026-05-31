@@ -48,6 +48,53 @@ export function formatOrderStatus(status: string): string {
   }
 }
 
+export function formatSimInventoryStatus(status: string): string {
+  switch (status) {
+    case "available":
+      return "Sẵn sàng";
+    case "reserved":
+      return "Đã giữ";
+    case "sold":
+      return "Đã bán";
+    case "expired":
+      return "Hết hạn";
+    case "disabled":
+      return "Vô hiệu";
+    default:
+      return status;
+  }
+}
+
+export function formatUserRole(role: string): string {
+  switch (role) {
+    case "customer":
+      return "Khách lẻ";
+    case "agent":
+      return "Đại lý";
+    case "collaborator":
+      return "CTV";
+    case "staff":
+      return "Nhân viên";
+    case "admin":
+      return "Admin";
+    default:
+      return role;
+  }
+}
+
+export function formatUserStatus(status: string): string {
+  switch (status) {
+    case "active":
+      return "Hoạt động";
+    case "inactive":
+      return "Ngưng";
+    case "blocked":
+      return "Khóa";
+    default:
+      return status;
+  }
+}
+
 export function formatPaymentStatus(status: string): string {
   switch (status) {
     case "unpaid":

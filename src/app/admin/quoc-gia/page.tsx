@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
@@ -9,6 +9,8 @@ import {
   fetchAdminPaginated,
   type AdminPaginated,
 } from "@/lib/admin-list";
+
+type BoolFilter = "" | "true" | "false";
 
 export default function AdminCountriesPage() {
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
@@ -19,6 +21,12 @@ export default function AdminCountriesPage() {
     totalPages: 1,
   });
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [popularInput, setPopularInput] = useState<BoolFilter>("");
+  const [activeInput, setActiveInput] = useState<BoolFilter>("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedPopular, setAppliedPopular] = useState<BoolFilter>("");
+  const [appliedActive, setAppliedActive] = useState<BoolFilter>("");
   const [form, setForm] = useState({
     name: "",
     nameVi: "",
@@ -29,22 +37,50 @@ export default function AdminCountriesPage() {
     isActive: true,
   });
 
-  const load = useCallback(async (p = page) => {
-    try {
-      const data = await fetchAdminPaginated<Record<string, unknown>>(
-        "/api/admin/countries",
-        p
-      );
-      setList(data);
-      setPage(data.page);
-    } catch {
-      toast.error("Lỗi tải quốc gia");
-    }
-  }, [page]);
+  const load = useCallback(
+    async (p: number) => {
+      try {
+        const extra: Record<string, string> = {};
+        if (appliedSearch) extra.search = appliedSearch;
+        if (appliedPopular) extra.isPopular = appliedPopular;
+        if (appliedActive) extra.isActive = appliedActive;
+
+        const data = await fetchAdminPaginated<Record<string, unknown>>(
+          "/api/admin/countries",
+          p,
+          ADMIN_LIST_LIMIT,
+          extra
+        );
+        setList(data);
+        setPage(data.page);
+      } catch {
+        toast.error("Lỗi tải quốc gia");
+      }
+    },
+    [appliedSearch, appliedPopular, appliedActive]
+  );
 
   useEffect(() => {
     void load(page);
-  }, [page]);
+  }, [page, load]);
+
+  function applyFilters(e?: FormEvent) {
+    e?.preventDefault();
+    setAppliedSearch(searchInput.trim());
+    setAppliedPopular(popularInput);
+    setAppliedActive(activeInput);
+    setPage(1);
+  }
+
+  function resetFilters() {
+    setSearchInput("");
+    setPopularInput("");
+    setActiveInput("");
+    setAppliedSearch("");
+    setAppliedPopular("");
+    setAppliedActive("");
+    setPage(1);
+  }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -71,9 +107,17 @@ export default function AdminCountriesPage() {
     void load(page);
   }
 
+  const hasActiveFilters = Boolean(appliedSearch || appliedPopular || appliedActive);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-black">Quốc gia</h1>
+      <div>
+        <h1 className="text-2xl font-black">Quốc gia</h1>
+        <p className="text-sm text-slate-600">
+          Tìm theo tên, mã ISO hoặc slug; lọc popular / trạng thái active.
+        </p>
+      </div>
+
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <input className={inputClass} placeholder="Tên EN" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={inputClass} placeholder="Tên VI" value={form.nameVi} required onChange={(e) => setForm({ ...form, nameVi: e.target.value })} />
@@ -86,6 +130,59 @@ export default function AdminCountriesPage() {
         </label>
         <button type="submit" className="btn-primary sm:col-span-2">Thêm quốc gia</button>
       </form>
+
+      <form
+        onSubmit={applyFilters}
+        className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end"
+      >
+        <label className="min-w-0 flex-1 sm:min-w-[220px]">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Tìm kiếm</span>
+          <input
+            type="search"
+            className={inputClass}
+            placeholder="Tên, mã ISO, slug…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+        </label>
+        <label className="w-full sm:w-40">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Popular</span>
+          <select
+            className={inputClass}
+            value={popularInput}
+            onChange={(e) => setPopularInput(e.target.value as BoolFilter)}
+          >
+            <option value="">Tất cả</option>
+            <option value="true">Có</option>
+            <option value="false">Không</option>
+          </select>
+        </label>
+        <label className="w-full sm:w-40">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Active</span>
+          <select
+            className={inputClass}
+            value={activeInput}
+            onChange={(e) => setActiveInput(e.target.value as BoolFilter)}
+          >
+            <option value="">Tất cả</option>
+            <option value="true">Đang bật</option>
+            <option value="false">Đã tắt</option>
+          </select>
+        </label>
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary px-5 py-2 text-sm">Lọc</button>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={resetFilters}
+            >
+              Xóa lọc
+            </button>
+          ) : null}
+        </div>
+      </form>
+
       <div className={`card ${adminTableWrapClass} p-4`}>
         <table className="min-w-[520px] w-full text-sm">
           <thead className="bg-slate-50 text-left">
@@ -98,22 +195,30 @@ export default function AdminCountriesPage() {
             </tr>
           </thead>
           <tbody>
-            {list.items.map((c) => {
-              const id = docId(c);
-              return (
-                <tr key={id} className="border-t">
-                  <td className="px-3 py-2">{String(c.nameVi || c.name)}</td>
-                  <td className="px-3 py-2">{String(c.code)}</td>
-                  <td className="px-3 py-2">{String(c.slug)}</td>
-                  <td className="px-3 py-2">
-                    <input type="checkbox" defaultChecked={!!c.isPopular} onChange={(e) => void update(id, { isPopular: e.target.checked })} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input type="checkbox" defaultChecked={c.isActive !== false} onChange={(e) => void update(id, { isActive: e.target.checked })} />
-                  </td>
-                </tr>
-              );
-            })}
+            {list.items.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
+                  Không có quốc gia phù hợp.
+                </td>
+              </tr>
+            ) : (
+              list.items.map((c) => {
+                const id = docId(c);
+                return (
+                  <tr key={id} className="border-t">
+                    <td className="px-3 py-2">{String(c.nameVi || c.name)}</td>
+                    <td className="px-3 py-2">{String(c.code)}</td>
+                    <td className="px-3 py-2">{String(c.slug)}</td>
+                    <td className="px-3 py-2">
+                      <input type="checkbox" defaultChecked={!!c.isPopular} onChange={(e) => void update(id, { isPopular: e.target.checked })} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input type="checkbox" defaultChecked={c.isActive !== false} onChange={(e) => void update(id, { isActive: e.target.checked })} />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
         <AdminPagination
