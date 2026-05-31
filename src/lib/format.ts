@@ -2,6 +2,21 @@ export function formatVnd(amount: number): string {
   return `${amount.toLocaleString("vi-VN")}đ`;
 }
 
+export function formatApiPackageType(type: string): string {
+  switch (type) {
+    case "data_only":
+      return "Chỉ data";
+    case "data_call":
+      return "Data + gọi";
+    case "unlimited":
+      return "Không giới hạn";
+    case "daily_data":
+      return "Data theo ngày";
+    default:
+      return formatPackageType(type);
+  }
+}
+
 export function formatPackageType(type: string): string {
   switch (type) {
     case "daily":

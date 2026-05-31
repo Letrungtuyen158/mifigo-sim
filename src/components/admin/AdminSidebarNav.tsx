@@ -18,6 +18,7 @@ const NAV = [
   { href: "/admin/import", label: "Import" },
   { href: "/admin/esim-vn", label: "eSIM VN" },
   { href: "/admin/nhat-ky", label: "Nhật ký" },
+  { href: "/admin/cai-dat", label: "Cài đặt hệ thống" },
 ] as const;
 
 function isActive(pathname: string, href: string, exact?: boolean) {

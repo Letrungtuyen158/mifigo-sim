@@ -260,6 +260,24 @@ export function mapAdminPackageListItem(item: MongoDoc): PackagePricingRow {
   };
 }
 
+/** Admin list item từ GET /admin/packages — unwrap `package` nested object */
+export function mapSystemPackageRow(item: MongoDoc) {
+  const pkg = (item.package || item) as MongoDoc;
+  return {
+    id: idOf(pkg),
+    name: String(pkg.name || ""),
+    slug: String(pkg.slug || ""),
+    simType: String(pkg.simType || ""),
+    packageType: String(pkg.packageType || ""),
+    status: String(pkg.status || "active"),
+    durationDays: Number(pkg.durationDays || 0),
+    dataAmountGb:
+      pkg.dataAmountGb != null && pkg.dataAmountGb !== ""
+        ? Number(pkg.dataAmountGb)
+        : null,
+  };
+}
+
 export function mapSupplierFromApi(doc: MongoDoc): Supplier {
   return {
     id: idOf(doc),
