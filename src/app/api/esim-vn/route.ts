@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       const { searchParams } = req.nextUrl;
       const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);
       const limit = Math.min(
-        100,
+        ADMIN_LIST_LIMIT,
         Math.max(1, Number(searchParams.get("limit") || String(ADMIN_LIST_LIMIT)) || ADMIN_LIST_LIMIT)
       );
       const qs = new URLSearchParams({ page: String(page), limit: String(limit) });

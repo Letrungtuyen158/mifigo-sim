@@ -4,6 +4,7 @@ import { apiRequest, toNextError } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/lib/api/auth-token";
 import { mapOrderFromApi } from "@/lib/api/mappers";
 import { getSessionUser, isCustomerRole } from "@/lib/auth";
+import { ADMIN_LIST_LIMIT } from "@/lib/admin-list";
 
 interface PaginatedOrders {
   items: Record<string, unknown>[];
@@ -32,8 +33,8 @@ export async function GET() {
     const payload = decodeJwtPayload(token);
     const isAdmin = payload?.role === "admin" || payload?.role === "staff";
     const path = isAdmin
-      ? "/admin/orders?limit=100"
-      : "/customer/orders?limit=100";
+      ? `/admin/orders?limit=${ADMIN_LIST_LIMIT}`
+      : `/customer/orders?limit=${ADMIN_LIST_LIMIT}`;
 
     const data = await apiRequest<PaginatedOrders>(path, { token });
     const orders = await Promise.all(

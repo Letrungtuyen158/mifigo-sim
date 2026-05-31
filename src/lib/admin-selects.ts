@@ -1,10 +1,10 @@
 import { mapSystemPackageRow } from "@/lib/api/mappers";
 import { docId } from "@/lib/admin-utils";
-import { fetchAdminListItems, fetchAdminPaginated } from "@/lib/admin-list";
+import { ADMIN_LIST_LIMIT, fetchAdminListItems, fetchAdminPaginated } from "@/lib/admin-list";
 
 export type SelectOption = { id: string; label: string };
 
-export async function fetchCountrySelectOptions(limit = 100): Promise<SelectOption[]> {
+export async function fetchCountrySelectOptions(limit = ADMIN_LIST_LIMIT): Promise<SelectOption[]> {
   const rows = await fetchAdminListItems<Record<string, unknown>>("/api/admin/countries", limit);
   return rows.map((c) => ({
     id: docId(c),
@@ -12,7 +12,7 @@ export async function fetchCountrySelectOptions(limit = 100): Promise<SelectOpti
   }));
 }
 
-export async function fetchCustomerGroupSelectOptions(limit = 100): Promise<SelectOption[]> {
+export async function fetchCustomerGroupSelectOptions(limit = ADMIN_LIST_LIMIT): Promise<SelectOption[]> {
   const rows = await fetchAdminListItems<Record<string, unknown>>(
     "/api/admin/customer-groups",
     limit
@@ -23,7 +23,7 @@ export async function fetchCustomerGroupSelectOptions(limit = 100): Promise<Sele
   }));
 }
 
-export async function fetchPackageSelectOptions(limit = 100): Promise<SelectOption[]> {
+export async function fetchPackageSelectOptions(limit = ADMIN_LIST_LIMIT): Promise<SelectOption[]> {
   const page = await fetchAdminPaginated<Record<string, unknown>>(
     "/api/admin/packages",
     1,

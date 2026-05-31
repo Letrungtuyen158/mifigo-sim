@@ -1,6 +1,6 @@
 import { mongoIdString } from "@/lib/admin-utils";
 
-/** Matches BE `PaginationDto`: default page=1, limit=20, max limit=100 */
+/** Matches BE `PaginationDto`: page/limit mặc định 20 (FE không gửi limit > 20). */
 export const ADMIN_LIST_LIMIT = 20;
 
 export interface AdminPaginated<T> {
@@ -18,7 +18,7 @@ export function buildAdminListQuery(
 ) {
   const params = new URLSearchParams({
     page: String(Math.max(1, page)),
-    limit: String(Math.min(100, Math.max(1, limit))),
+    limit: String(Math.min(ADMIN_LIST_LIMIT, Math.max(1, limit))),
   });
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
