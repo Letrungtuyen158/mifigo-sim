@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
+import SeoScripts from "@/components/SeoScripts";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import { getPublicBrand } from "@/lib/brand";
+import { buildSiteMetadata, getPublicSeoSettings } from "@/lib/seo-settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -11,22 +14,21 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Mifigo SIM — Travel SIM/eSIM",
-  description: "Search travel SIM/eSIM plans by country, order fast, manage supplier pricing.",
-  icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [seo, brand] = await Promise.all([getPublicSeoSettings(), getPublicBrand()]);
+  return buildSiteMetadata(seo, brand);
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const [brand, seo] = await Promise.all([getPublicBrand(), getPublicSeoSettings()]);
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${geistSans.variable} min-h-screen antialiased`}>
-        <Providers>
+        <Providers brand={brand}>
+          <SeoScripts googleAnalyticsId={seo.googleAnalyticsId} />
           <div className="flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>

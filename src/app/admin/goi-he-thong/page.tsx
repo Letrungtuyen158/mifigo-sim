@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
+import CountryMultiSelect from "@/components/admin/CountryMultiSelect";
 import { mapSystemPackageRow } from "@/lib/api/mappers";
+import { fetchCountrySelectOptions, type SelectOption } from "@/lib/admin-selects";
 import { inputClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 import { formatApiPackageType, formatDataGb, formatSimType } from "@/lib/format";
@@ -22,7 +25,9 @@ export default function AdminPackagesPage() {
   const [statusInput, setStatusInput] = useState<(typeof STATUSES)[number] | "">("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [appliedStatus, setAppliedStatus] = useState<(typeof STATUSES)[number] | "">("");
-  const [countryIds, setCountryIds] = useState("");
+  const [countryOptions, setCountryOptions] = useState<SelectOption[]>([]);
+  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([]);
+  const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -32,6 +37,12 @@ export default function AdminPackagesPage() {
     dataAmountGb: 5,
     status: "active",
   });
+
+  useEffect(() => {
+    void fetchCountrySelectOptions().then(setCountryOptions).catch(() => {
+      toast.error("Không tải được danh sách quốc gia");
+    });
+  }, []);
 
   const load = useCallback(
     async (p: number) => {
@@ -82,16 +93,20 @@ export default function AdminPackagesPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const ids = countryIds.split(",").map((s) => s.trim()).filter(Boolean);
-    if (!ids.length) return toast.error("Nhập countryIds (MongoId, phân cách dấu phẩy)");
+    if (!selectedCountryIds.length) {
+      return toast.error("Chọn ít nhất một quốc gia");
+    }
     const res = await fetch("/api/admin/packages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, countryIds: ids }),
+      body: JSON.stringify({ ...form, countryIds: selectedCountryIds }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { success?: boolean; data?: Record<string, unknown>; message?: string };
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
-    toast.success("Đã tạo gói");
+
+    const created = mapSystemPackageRow(data.data || {});
+    setLastCreatedId(created.id);
+    toast.success("Đã tạo gói — bước tiếp theo: cấu hình giá bán (sale-price-rules)");
     setPage(1);
     void load(1);
   }
@@ -112,30 +127,88 @@ export default function AdminPackagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black">Gói hệ thống (Package)</h1>
+        <h1 className="text-2xl font-black">Gói cước (catalog)</h1>
         <p className="text-sm text-slate-600">
-          Catalog gói cước — sau khi tạo cần thêm quy tắc giá bán để hiện trên website.
+          Chỉ thông tin gói — không nhập giá ở đây. Sau khi tạo gói, thêm{" "}
+          <Link href="/admin/gia-ban" className="font-semibold text-[#1d6be8] hover:underline">
+            quy tắc giá bán
+          </Link>{" "}
+          (tối thiểu kênh <code className="text-xs">anonymous</code>) để hiện trên website.
         </p>
       </div>
 
+      {lastCreatedId ? (
+        <div className="card flex flex-wrap items-center justify-between gap-3 border-[#1d6be8]/30 bg-[#1d6be8]/5 p-4 text-sm">
+          <span>Gói vừa tạo cần cấu hình giá bán trước khi lên search public.</span>
+          <Link href={`/admin/gia-ban/${lastCreatedId}`} className="btn-primary text-sm">
+            Cấu hình giá bán →
+          </Link>
+        </div>
+      ) : null}
+
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 font-bold">Tạo gói mới</h2>
-        <input className={inputClass} placeholder="Tên gói" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input className={inputClass} placeholder="Slug" value={form.slug} required onChange={(e) => setForm({ ...form, slug: e.target.value })} />
-        <input className={inputClass} placeholder="countryIds (id1,id2)" value={countryIds} onChange={(e) => setCountryIds(e.target.value)} />
-        <select className={inputClass} value={form.simType} onChange={(e) => setForm({ ...form, simType: e.target.value })}>
+        <input
+          className={inputClass}
+          placeholder="Tên gói"
+          value={form.name}
+          required
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <input
+          className={inputClass}
+          placeholder="Slug"
+          value={form.slug}
+          required
+          onChange={(e) => setForm({ ...form, slug: e.target.value })}
+        />
+        <div className="sm:col-span-2">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Quốc gia (chọn từ danh sách)</span>
+          <CountryMultiSelect
+            options={countryOptions}
+            value={selectedCountryIds}
+            onChange={setSelectedCountryIds}
+          />
+        </div>
+        <select
+          className={inputClass}
+          value={form.simType}
+          onChange={(e) => setForm({ ...form, simType: e.target.value })}
+        >
           {SIM_TYPES.map((s) => (
-            <option key={s} value={s}>{formatSimType(s)}</option>
+            <option key={s} value={s}>
+              {formatSimType(s)}
+            </option>
           ))}
         </select>
-        <select className={inputClass} value={form.packageType} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
+        <select
+          className={inputClass}
+          value={form.packageType}
+          onChange={(e) => setForm({ ...form, packageType: e.target.value })}
+        >
           {PKG_TYPES.map((p) => (
-            <option key={p} value={p}>{formatApiPackageType(p)}</option>
+            <option key={p} value={p}>
+              {formatApiPackageType(p)}
+            </option>
           ))}
         </select>
-        <input className={inputClass} type="number" placeholder="Số ngày" value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })} />
-        <input className={inputClass} type="number" placeholder="GB" value={form.dataAmountGb} onChange={(e) => setForm({ ...form, dataAmountGb: Number(e.target.value) })} />
-        <button type="submit" className="btn-primary sm:col-span-2">Tạo gói</button>
+        <input
+          className={inputClass}
+          type="number"
+          placeholder="Số ngày"
+          value={form.durationDays}
+          onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
+        />
+        <input
+          className={inputClass}
+          type="number"
+          placeholder="GB"
+          value={form.dataAmountGb}
+          onChange={(e) => setForm({ ...form, dataAmountGb: Number(e.target.value) })}
+        />
+        <button type="submit" className="btn-primary sm:col-span-2">
+          Tạo gói
+        </button>
       </form>
 
       <form
@@ -161,12 +234,16 @@ export default function AdminPackagesPage() {
           >
             <option value="">Tất cả</option>
             {STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </label>
         <div className="flex gap-2">
-          <button type="submit" className="btn-primary px-5 py-2 text-sm">Lọc</button>
+          <button type="submit" className="btn-primary px-5 py-2 text-sm">
+            Lọc
+          </button>
           {hasActiveFilters ? (
             <button
               type="button"
@@ -192,13 +269,21 @@ export default function AdminPackagesPage() {
                   {formatDataGb(p.dataAmountGb)} / {p.durationDays} ngày
                 </div>
               </div>
+              <Link
+                href={`/admin/gia-ban/${p.id}`}
+                className="text-sm font-semibold text-[#1d6be8] hover:underline"
+              >
+                Giá bán
+              </Link>
               <select
                 className={`${inputClass} w-32`}
                 defaultValue={p.status}
                 onChange={(e) => void update(p.id, { status: e.target.value })}
               >
                 {STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>

@@ -61,10 +61,10 @@ export default function AdminSupplierCostListPage() {
     <div className="space-y-4">
       <div className={adminPageHeaderClass}>
         <div>
-          <h1 className="text-2xl font-black">Giá nhập NCC</h1>
+          <h1 className="text-2xl font-black">Giá vốn NCC</h1>
           <p className="text-sm text-slate-600">
-            List từ <code className="text-xs">GET /admin/packages</code> (costPrice = NCC rẻ nhất).
-            Sửa từng NCC ở trang chi tiết gói.
+            Chi tiết giá vốn: <code className="text-xs">GET /admin/packages/:id/supplier-prices</code>.
+            CRUD: <code className="text-xs">/admin/supplier-package-prices</code>.
           </p>
         </div>
       </div>

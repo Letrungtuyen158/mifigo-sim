@@ -5,7 +5,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  return adminGet(`/admin/users/${id}`);
+  return adminGet(`/admin/users/${id}`, undefined, "Lỗi tải người dùng", true);
 }
 
 export async function PUT(
@@ -14,5 +14,5 @@ export async function PUT(
 ) {
   const { id } = await ctx.params;
   const body = await req.json();
-  return adminPut(`/admin/users/${id}`, body);
+  return adminPut(`/admin/users/${id}`, body, "Cập nhật thất bại", true);
 }

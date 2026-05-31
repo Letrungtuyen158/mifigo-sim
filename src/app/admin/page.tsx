@@ -47,7 +47,7 @@ export default async function AdminDashboardPage() {
           { token }
         ),
         apiRequest<Paginated<Record<string, unknown>>>(
-          "/admin/orders?status=waiting_payment_confirmation&limit=1",
+          "/admin/orders?paymentStatus=pending_review&limit=1",
           { token }
         ),
         apiRequest<Paginated<Record<string, unknown>>>(
@@ -87,9 +87,9 @@ export default async function AdminDashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {[
-          ["Gói cước", stats.packageCount, "/admin/goi-cuoc"],
+          ["Gói cước", stats.packageCount, "/admin/goi-he-thong"],
           ["Nhà cung cấp", stats.supplierCount, "/admin/nha-cung-cap"],
-          ["Đơn chờ xử lý", stats.pendingOrders, "/admin/don-hang"],
+          ["Chờ duyệt CK", stats.pendingOrders, "/admin/don-hang?queue=pending_review"],
           ["Kho SIM/eSIM", stats.inventoryCount, "/admin/kho-sim"],
           ["eSIM trong kho", stats.esimCount, "/admin/kho-sim?simType=esim"],
         ].map(([label, value, href]) => (

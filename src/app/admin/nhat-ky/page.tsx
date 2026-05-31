@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, adminTableWrapClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
-export default function AdminActivityLogsPage() {
+function AdminActivityLogsContent() {
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
@@ -70,5 +71,13 @@ export default function AdminActivityLogsPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AdminActivityLogsPage() {
+  return (
+    <AdminOnlyGate>
+      <AdminActivityLogsContent />
+    </AdminOnlyGate>
   );
 }

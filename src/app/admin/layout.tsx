@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isStaffOrAdmin } from "@/lib/api/require-admin";
 import AdminSidebarNav from "@/components/admin/AdminSidebarNav";
+import { AdminRoleProvider } from "@/contexts/AdminRoleContext";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function AdminLayout({
@@ -12,6 +13,7 @@ export default async function AdminLayout({
   if (!user || !isStaffOrAdmin(user.role)) redirect("/dang-nhap");
 
   return (
+    <AdminRoleProvider role={user.role}>
     <div className="admin-shell min-h-screen overflow-x-hidden bg-slate-100">
       <div className="border-b bg-white">
         <div className="container-page flex min-w-0 items-center justify-between gap-3 py-3">
@@ -36,5 +38,6 @@ export default async function AdminLayout({
         <main className="admin-main min-w-0 w-full max-w-full">{children}</main>
       </div>
     </div>
+    </AdminRoleProvider>
   );
 }

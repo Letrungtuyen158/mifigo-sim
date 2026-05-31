@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import AdminPagination from "@/components/admin/AdminPagination";
 import ExcelFilePicker from "@/components/admin/ExcelFilePicker";
 import { fetchAdminSuppliers, fetchPackageSelectOptions } from "@/lib/admin-pricing";
@@ -49,7 +50,7 @@ const SIM_INVENTORY_ESIM_COLUMNS = [
 
 const SIM_INVENTORY_PHYSICAL_COLUMNS = ["iccid", "serial_number", "note"];
 
-export default function AdminImportPage() {
+function AdminImportContent() {
   const [batchType, setBatchType] = useState<"" | "supplier_price" | "sim_inventory">("");
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
     items: [],
@@ -439,5 +440,13 @@ export default function AdminImportPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AdminImportPage() {
+  return (
+    <AdminOnlyGate>
+      <AdminImportContent />
+    </AdminOnlyGate>
   );
 }

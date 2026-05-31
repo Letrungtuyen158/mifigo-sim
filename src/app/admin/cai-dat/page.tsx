@@ -2,16 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import { inputClass } from "@/lib/admin-utils";
 
 type BrandSettings = {
   name: string;
-  tagline: string;
   logoUrl: string;
-  logoDarkUrl: string;
-  faviconUrl: string;
-  primaryColor: string;
-  secondaryColor: string;
   supportEmail: string;
   supportPhone: string;
   companyAddress: string;
@@ -26,16 +22,11 @@ type BankSettings = {
   qrCodeUrl: string;
 };
 
-type AssetType = "logo" | "logoDark" | "favicon" | "bankQr";
+type AssetType = "logo" | "bankQr";
 
 const EMPTY_BRAND: BrandSettings = {
   name: "",
-  tagline: "",
   logoUrl: "",
-  logoDarkUrl: "",
-  faviconUrl: "",
-  primaryColor: "#0066CC",
-  secondaryColor: "#FF6600",
   supportEmail: "",
   supportPhone: "",
   companyAddress: "",
@@ -52,8 +43,6 @@ const EMPTY_BANK: BankSettings = {
 
 const ASSET_LABELS: Record<AssetType, string> = {
   logo: "Logo",
-  logoDark: "Logo dark",
-  favicon: "Favicon",
   bankQr: "QR ngân hàng",
 };
 
@@ -65,12 +54,7 @@ function mapBrand(raw: Record<string, unknown> | undefined): BrandSettings {
   if (!raw) return { ...EMPTY_BRAND };
   return {
     name: str(raw.name),
-    tagline: str(raw.tagline),
     logoUrl: str(raw.logoUrl),
-    logoDarkUrl: str(raw.logoDarkUrl),
-    faviconUrl: str(raw.faviconUrl),
-    primaryColor: str(raw.primaryColor) || EMPTY_BRAND.primaryColor,
-    secondaryColor: str(raw.secondaryColor) || EMPTY_BRAND.secondaryColor,
     supportEmail: str(raw.supportEmail),
     supportPhone: str(raw.supportPhone),
     companyAddress: str(raw.companyAddress),
@@ -103,7 +87,7 @@ function AssetPreview({ url, label }: { url: string; label: string }) {
   );
 }
 
-export default function AdminSystemSettingsPage() {
+function AdminSystemSettingsForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<AssetType | null>(null);
@@ -111,8 +95,6 @@ export default function AdminSystemSettingsPage() {
   const [bank, setBank] = useState<BankSettings>(EMPTY_BANK);
   const fileRefs = {
     logo: useRef<HTMLInputElement>(null),
-    logoDark: useRef<HTMLInputElement>(null),
-    favicon: useRef<HTMLInputElement>(null),
     bankQr: useRef<HTMLInputElement>(null),
   };
 
@@ -180,13 +162,7 @@ export default function AdminSystemSettingsPage() {
       if (assetType === "bankQr") {
         setBank((prev) => ({ ...prev, qrCodeUrl: url }));
       } else {
-        const fieldMap: Record<Exclude<AssetType, "bankQr">, keyof BrandSettings> = {
-          logo: "logoUrl",
-          logoDark: "logoDarkUrl",
-          favicon: "faviconUrl",
-        };
-        const field = fieldMap[assetType];
-        setBrand((prev) => ({ ...prev, [field]: url }));
+        setBrand((prev) => ({ ...prev, logoUrl: url }));
       }
       toast.success(`Đã upload ${ASSET_LABELS[assetType]}`);
     } catch (e) {
@@ -224,15 +200,11 @@ export default function AdminSystemSettingsPage() {
       </div>
 
       <div className="card space-y-4 p-5">
-        <h2 className="font-bold">Thương hiệu (brand)</h2>
+        <h2 className="font-bold">Thương hiệu</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Tên thương hiệu</span>
             <input className={inputClass} value={brand.name} onChange={(e) => setBrand({ ...brand, name: e.target.value })} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold">Tagline</span>
-            <input className={inputClass} value={brand.tagline} onChange={(e) => setBrand({ ...brand, tagline: e.target.value })} />
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Email hỗ trợ</span>
@@ -242,57 +214,40 @@ export default function AdminSystemSettingsPage() {
             <span className="mb-1 block font-semibold">Hotline</span>
             <input className={inputClass} value={brand.supportPhone} onChange={(e) => setBrand({ ...brand, supportPhone: e.target.value })} />
           </label>
-          <label className="block text-sm sm:col-span-2">
-            <span className="mb-1 block font-semibold">Địa chỉ công ty</span>
-            <input className={inputClass} value={brand.companyAddress} onChange={(e) => setBrand({ ...brand, companyAddress: e.target.value })} />
-          </label>
           <label className="block text-sm">
             <span className="mb-1 block font-semibold">Website</span>
             <input className={inputClass} value={brand.websiteUrl} onChange={(e) => setBrand({ ...brand, websiteUrl: e.target.value })} />
           </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
-              <span className="mb-1 block font-semibold">Màu chính</span>
-              <input className={inputClass} type="color" value={brand.primaryColor} onChange={(e) => setBrand({ ...brand, primaryColor: e.target.value })} />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block font-semibold">Màu phụ</span>
-              <input className={inputClass} type="color" value={brand.secondaryColor} onChange={(e) => setBrand({ ...brand, secondaryColor: e.target.value })} />
-            </label>
-          </div>
+          <label className="block text-sm sm:col-span-2">
+            <span className="mb-1 block font-semibold">Địa chỉ công ty</span>
+            <input className={inputClass} value={brand.companyAddress} onChange={(e) => setBrand({ ...brand, companyAddress: e.target.value })} />
+          </label>
         </div>
 
-        <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
-          {(["logo", "logoDark", "favicon"] as const).map((assetType) => (
-            <div key={assetType} className="rounded-xl border border-slate-100 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold">{ASSET_LABELS[assetType]}</span>
-                <button
-                  type="button"
-                  className="rounded-lg border px-3 py-1 text-xs font-semibold hover:bg-slate-50"
-                  disabled={uploading === assetType}
-                  onClick={() => pickAsset(assetType)}
-                >
-                  {uploading === assetType ? "Đang upload…" : "Upload"}
-                </button>
-              </div>
-              <input
-                ref={fileRefs[assetType]}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/svg+xml,image/x-icon"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void uploadAsset(assetType, file);
-                  e.target.value = "";
-                }}
-              />
-              <AssetPreview
-                url={brand[assetType === "logo" ? "logoUrl" : assetType === "logoDark" ? "logoDarkUrl" : "faviconUrl"]}
-                label={ASSET_LABELS[assetType]}
-              />
-            </div>
-          ))}
+        <div className="rounded-xl border border-slate-100 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold">Logo</span>
+            <button
+              type="button"
+              className="rounded-lg border px-3 py-1 text-xs font-semibold hover:bg-slate-50"
+              disabled={uploading === "logo"}
+              onClick={() => pickAsset("logo")}
+            >
+              {uploading === "logo" ? "Đang upload…" : "Upload"}
+            </button>
+          </div>
+          <input
+            ref={fileRefs.logo}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/svg+xml,image/x-icon"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void uploadAsset("logo", file);
+              e.target.value = "";
+            }}
+          />
+          <AssetPreview url={brand.logoUrl} label="Logo" />
         </div>
       </div>
 
@@ -347,5 +302,13 @@ export default function AdminSystemSettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminSystemSettingsPage() {
+  return (
+    <AdminOnlyGate>
+      <AdminSystemSettingsForm />
+    </AdminOnlyGate>
   );
 }

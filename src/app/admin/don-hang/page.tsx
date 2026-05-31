@@ -129,6 +129,14 @@ export default function AdminOrdersPage() {
     setPage(1);
   }
 
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("queue");
+    if (q === "pending_review" || q === "processing" || q === "completed") {
+      selectQueue(q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preset từ URL dashboard
+  }, []);
+
   function resetFilters() {
     setSearchInput("");
     setStatusInput("");

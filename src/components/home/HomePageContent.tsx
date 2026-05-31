@@ -4,11 +4,12 @@ import Link from "next/link";
 import HeroQuickSearch from "@/components/home/HeroQuickSearch";
 import OrderStepsSection from "@/components/home/OrderStepsSection";
 import PopularCountriesSection from "@/components/home/PopularCountriesSection";
+import { useBrand } from "@/contexts/BrandContext";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { BRAND } from "@/lib/constants";
 
 export default function HomePageContent() {
   const { t } = useTranslation();
+  const brand = useBrand();
 
   return (
     <div>
@@ -26,7 +27,7 @@ export default function HomePageContent() {
         <div className="container-page relative z-10">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-              {BRAND.name}
+              {brand.name}
               <span className="text-[#1d6be8]"> eSIM</span>
             </h1>
             <p className="mt-4 text-lg font-medium text-slate-700 sm:text-xl">

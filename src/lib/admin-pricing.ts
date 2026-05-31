@@ -141,14 +141,7 @@ export async function fetchAdminSuppliers(limit = ADMIN_LIST_LIMIT): Promise<Sup
   return rows.map(mapSupplierFromApi);
 }
 
-/** Dropdown gói */
-export async function fetchPackageSelectOptions(limit = ADMIN_LIST_LIMIT) {
-  const page = await fetchAdminPaginated<JsonDoc>("/api/admin/packages", 1, limit);
-  return page.items.map((item) => {
-    const row = mapAdminPackageListItem(item);
-    return { id: row.packageId, label: row.name };
-  });
-}
+export { fetchPackageSelectOptions, fetchCustomerGroupSelectOptions } from "@/lib/admin-selects";
 
 export async function fetchBestSupplierComparison(
   packageId: string,

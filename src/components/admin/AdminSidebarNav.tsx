@@ -2,22 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useIsAdmin } from "@/contexts/AdminRoleContext";
 
 const NAV = [
   { href: "/admin", label: "Tổng quan", exact: true },
   { href: "/admin/don-hang", label: "Đơn hàng" },
-  { href: "/admin/users", label: "Người dùng" },
-  { href: "/admin/nhom-khach", label: "Nhóm khách" },
   { href: "/admin/quoc-gia", label: "Quốc gia" },
-  { href: "/admin/nha-cung-cap", label: "Nhà cung cấp" },
-  { href: "/admin/goi-he-thong", label: "Gói hệ thống" },
-  { href: "/admin/goi-cuoc", label: "Giá nhập NCC" },
-  { href: "/admin/gia-ban", label: "Giá bán kênh" },
+  { href: "/admin/goi-he-thong", label: "Gói cước" },
+  { href: "/admin/gia-ban", label: "Giá bán" },
+  { href: "/admin/goi-cuoc", label: "Giá vốn NCC" },
   { href: "/admin/so-sanh", label: "So sánh NCC" },
+  { href: "/admin/nha-cung-cap", label: "Nhà cung cấp" },
   { href: "/admin/kho-sim", label: "Kho SIM" },
-  { href: "/admin/import", label: "Import" },
-  { href: "/admin/nhat-ky", label: "Nhật ký" },
-  { href: "/admin/cai-dat", label: "Cài đặt hệ thống" },
+  { href: "/admin/import", label: "Import", adminOnly: true },
+  { href: "/admin/users", label: "Người dùng", adminOnly: true },
+  { href: "/admin/nhom-khach", label: "Nhóm khách", adminOnly: true },
+  { href: "/admin/trang", label: "Trang CMS", adminOnly: true },
+  { href: "/admin/seo", label: "SEO", adminOnly: true },
+  { href: "/admin/cai-dat", label: "Cài đặt hệ thống", adminOnly: true },
+  { href: "/admin/nhat-ky", label: "Nhật ký", adminOnly: true },
 ] as const;
 
 function isActive(pathname: string, href: string, exact?: boolean) {
@@ -31,7 +34,9 @@ export default function AdminSidebarNav({
   layout?: "vertical" | "horizontal";
 }) {
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
   const horizontal = layout === "horizontal";
+  const items = NAV.filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin);
 
   return (
     <nav
@@ -41,7 +46,7 @@ export default function AdminSidebarNav({
           : "flex flex-col gap-1"
       }
     >
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active = isActive(pathname, item.href, "exact" in item && item.exact);
         return (
           <Link

@@ -2,7 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import AdminPagination from "@/components/admin/AdminPagination";
+import { fetchCustomerGroupSelectOptions, type SelectOption } from "@/lib/admin-selects";
 import { docId, inputClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated, type AdminPaginated } from "@/lib/admin-list";
 import { formatUserRole, formatUserStatus } from "@/lib/format";
@@ -12,7 +14,7 @@ type UserRow = Record<string, unknown>;
 const ROLES = ["customer", "agent", "collaborator", "staff", "admin"] as const;
 const STATUSES = ["active", "inactive", "blocked"] as const;
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
   const [list, setList] = useState<AdminPaginated<UserRow>>({
     items: [],
     total: 0,
@@ -27,13 +29,21 @@ export default function AdminUsersPage() {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [appliedRole, setAppliedRole] = useState<(typeof ROLES)[number] | "">("");
   const [appliedStatus, setAppliedStatus] = useState<(typeof STATUSES)[number] | "">("");
+  const [groupOptions, setGroupOptions] = useState<SelectOption[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
     phone: "",
     role: "customer",
+    customerGroupId: "",
   });
+
+  useEffect(() => {
+    void fetchCustomerGroupSelectOptions()
+      .then(setGroupOptions)
+      .catch(() => toast.error("Không tải được nhóm khách"));
+  }, []);
 
   const load = useCallback(
     async (p: number) => {
@@ -77,15 +87,24 @@ export default function AdminUsersPage() {
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault();
+    const payload: Record<string, unknown> = { ...form };
+    if (!payload.customerGroupId) delete payload.customerGroupId;
     const res = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo người dùng");
-    setForm({ fullName: "", email: "", password: "", phone: "", role: "customer" });
+    setForm({
+      fullName: "",
+      email: "",
+      password: "",
+      phone: "",
+      role: "customer",
+      customerGroupId: "",
+    });
     setPage(1);
     void load(1);
   }
@@ -127,6 +146,21 @@ export default function AdminUsersPage() {
             <option key={r} value={r}>{formatUserRole(r)}</option>
           ))}
         </select>
+        <label className="block text-sm sm:col-span-2">
+          <span className="mb-1 block font-semibold">Nhóm khách (tuỳ chọn)</span>
+          <select
+            className={inputClass}
+            value={form.customerGroupId}
+            onChange={(e) => setForm({ ...form, customerGroupId: e.target.value })}
+          >
+            <option value="">— Không —</option>
+            {groupOptions.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="submit" className="btn-primary sm:col-span-2">Tạo user</button>
       </form>
 
@@ -191,7 +225,7 @@ export default function AdminUsersPage() {
           list.items.map((u) => {
             const id = docId(u);
             return (
-              <div key={id} className="grid min-w-0 gap-2 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-4">
+              <div key={id} className="grid min-w-0 gap-2 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-5">
                 <div>
                   <div className="font-semibold">{String(u.fullName || "")}</div>
                   {u.phone ? (
@@ -217,6 +251,22 @@ export default function AdminUsersPage() {
                     <option key={s} value={s}>{formatUserStatus(s)}</option>
                   ))}
                 </select>
+                <select
+                  className={inputClass}
+                  defaultValue={String(u.customerGroupId || "")}
+                  onChange={(e) =>
+                    void updateUser(id, {
+                      customerGroupId: e.target.value || null,
+                    })
+                  }
+                >
+                  <option value="">— Nhóm —</option>
+                  {groupOptions.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             );
           })
@@ -230,5 +280,13 @@ export default function AdminUsersPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <AdminOnlyGate>
+      <AdminUsersContent />
+    </AdminOnlyGate>
   );
 }

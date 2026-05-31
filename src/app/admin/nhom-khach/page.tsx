@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
 import {
@@ -12,7 +13,7 @@ import {
 
 const TYPES = ["retail", "agent", "collaborator", "vip"] as const;
 
-export default function AdminCustomerGroupsPage() {
+function AdminCustomerGroupsContent() {
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
     items: [],
     total: 0,
@@ -103,5 +104,13 @@ export default function AdminCustomerGroupsPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AdminCustomerGroupsPage() {
+  return (
+    <AdminOnlyGate>
+      <AdminCustomerGroupsContent />
+    </AdminOnlyGate>
   );
 }
