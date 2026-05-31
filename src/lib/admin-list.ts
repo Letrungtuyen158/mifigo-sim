@@ -1,7 +1,7 @@
 import { mongoIdString } from "@/lib/admin-utils";
 
-/** Matches BE `PaginationDto`: page/limit mặc định 20 (FE không gửi limit > 20). */
-export const ADMIN_LIST_LIMIT = 20;
+/** Pagination admin: page/limit mặc định 10 (FE không gửi limit > 10). */
+export const ADMIN_LIST_LIMIT = 10;
 
 export interface AdminPaginated<T> {
   items: T[];

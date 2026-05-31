@@ -7,6 +7,7 @@ import {
   mapOrderFromApi,
 } from "@/lib/api/mappers";
 import { decodeJwtPayload } from "@/lib/api/auth-token";
+import { ADMIN_LIST_LIMIT } from "@/lib/admin-list";
 
 interface OrderDetailResponse {
   order: Record<string, unknown>;
@@ -35,7 +36,7 @@ async function findOrderByCodeOrId(
   }
 
   const list = await apiRequest<PaginatedOrders>(
-    `${base}?search=${encodeURIComponent(idOrCode)}&limit=20`,
+    `${base}?search=${encodeURIComponent(idOrCode)}&limit=${ADMIN_LIST_LIMIT}`,
     { token }
   );
   const match = (list.items || []).find(
