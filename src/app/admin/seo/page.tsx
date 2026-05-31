@@ -108,8 +108,7 @@ function SeoSettingsForm() {
         <div>
           <h1 className="text-2xl font-black">Cài đặt SEO</h1>
           <p className="text-sm text-slate-600">
-            Meta mặc định cho website — public chỉ nhận subset qua{" "}
-            <code className="text-xs">GET /public/seo/settings</code>.
+            Meta mặc định, Open Graph và mã theo dõi (Analytics) cho website công khai.
           </p>
         </div>
         <button type="button" className="btn-primary" disabled={saving} onClick={() => void save()}>

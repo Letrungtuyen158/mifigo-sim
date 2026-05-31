@@ -73,8 +73,7 @@ export default function AdminCompareListPage() {
       <div>
         <h1 className="text-2xl font-black">So sánh giá nhập NCC</h1>
         <p className="text-sm text-slate-600">
-          List từ <code className="text-xs">GET /admin/packages</code> (giá vốn rẻ nhất + giá bán +
-          lợi nhuận). So sánh đầy đủ NCC ở trang chi tiết.
+          So sánh giá vốn rẻ nhất, giá bán và lợi nhuận theo gói. Xem chi tiết từng nhà cung cấp ở trang con.
         </p>
       </div>
 

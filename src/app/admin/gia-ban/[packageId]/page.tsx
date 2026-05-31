@@ -79,8 +79,7 @@ export default function AdminChannelPricingDetailPage() {
           </Link>
           <h1 className="mt-2 text-2xl font-black">{pricing.packageName}</h1>
           <p className="text-sm text-slate-600">
-            Nhập: {formatVnd(pricing.costPrice)} ·{" "}
-            <code className="text-xs">GET /admin/sale-price-rules?packageId=…</code>
+            Giá vốn tham chiếu: {formatVnd(pricing.costPrice)}
           </p>
         </div>
         <button

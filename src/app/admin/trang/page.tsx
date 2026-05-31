@@ -95,9 +95,7 @@ function CmsPagesAdmin() {
       <div>
         <h1 className="text-2xl font-black">Trang CMS</h1>
         <p className="text-sm text-slate-600">
-          CRUD qua <code className="text-xs">/admin/pages</code>. Chỉ trang{" "}
-          <code className="text-xs">published</code> hiển thị trên{" "}
-          <code className="text-xs">GET /public/pages/:slug</code>.
+          Chỉ trang đã xuất bản (published) mới hiển thị trên website công khai.
         </p>
       </div>
 

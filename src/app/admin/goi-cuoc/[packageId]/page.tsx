@@ -124,9 +124,7 @@ export default function AdminSupplierCostDetailPage() {
           </Link>
           <h1 className="mt-2 text-2xl font-black">{packageName || "Giá nhập NCC"}</h1>
           <p className="text-sm text-slate-600">
-            <code className="text-xs">GET /admin/packages/:id/supplier-prices</code>
-            {" · "}
-            NCC chưa có giá sẽ được tạo mới khi lưu (POST).
+            Nhà cung cấp chưa có giá sẽ được tạo mới khi bạn lưu.
           </p>
         </div>
         <button

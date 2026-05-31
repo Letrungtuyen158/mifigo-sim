@@ -207,8 +207,7 @@ export default function AdminOrdersPage() {
       <div>
         <h1 className="text-2xl font-black">Đơn hàng</h1>
         <p className="text-sm text-slate-600">
-          Duyệt chuyển khoản qua <code className="text-xs">approve-payment</code>, hoàn tất/hủy qua{" "}
-          <code className="text-xs">PUT status</code>. Hiển thị cả trạng thái đơn và thanh toán.
+          Duyệt chuyển khoản, cập nhật trạng thái đơn và xuất hóa đơn khi cần.
         </p>
       </div>
 

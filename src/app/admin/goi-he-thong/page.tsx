@@ -110,7 +110,7 @@ export default function AdminPackagesPage() {
 
     const created = mapSystemPackageRow(data.data || {});
     setLastCreatedId(created.id);
-    toast.success("Đã tạo gói — bước tiếp theo: cấu hình giá bán (sale-price-rules)");
+    toast.success("Đã tạo gói — bước tiếp theo: cấu hình giá bán");
     setPage(1);
     void load(1);
   }
@@ -137,7 +137,7 @@ export default function AdminPackagesPage() {
           <Link href="/admin/gia-ban" className="font-semibold text-[#1d6be8] hover:underline">
             quy tắc giá bán
           </Link>{" "}
-          (tối thiểu kênh <code className="text-xs">anonymous</code>) để hiện trên website.
+          (tối thiểu một quy tắc giá kênh khách lẻ đang bật) để hiện trên website.
         </p>
       </div>
 

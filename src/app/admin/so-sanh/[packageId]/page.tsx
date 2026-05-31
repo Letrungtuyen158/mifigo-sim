@@ -59,9 +59,7 @@ export default function AdminCompareDetailPage() {
           ← Danh sách so sánh
         </Link>
         <h1 className="mt-2 text-2xl font-black">{packageName}</h1>
-        <p className="text-sm text-slate-600">
-          <code className="text-xs">GET /admin/packages/:id/best-supplier</code>
-        </p>
+        <p className="text-sm text-slate-600">So sánh giá nhập giữa các nhà cung cấp cho gói này.</p>
       </div>
 
       {best ? (

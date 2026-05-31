@@ -133,7 +133,7 @@ export default function AdminSalePriceRulesPage() {
     });
     const json = (await res.json()) as { message?: string };
     if (!res.ok) return toast.error(json.message || "Tạo rule thất bại");
-    toast.success("Đã tạo sale-price-rule");
+    toast.success("Đã tạo quy tắc giá");
     setNewRule({
       packageId: "",
       channel: "anonymous",
@@ -149,11 +149,9 @@ export default function AdminSalePriceRulesPage() {
     <div className="space-y-4">
       <div className={adminPageHeaderClass}>
         <div>
-          <h1 className="text-2xl font-black">Giá bán (sale-price-rules)</h1>
+          <h1 className="text-2xl font-black">Giá bán</h1>
           <p className="text-sm text-slate-600">
-            API: <code className="text-xs">GET/POST /admin/sale-price-rules</code>. Cần ít nhất một rule{" "}
-            <code className="text-xs">anonymous</code> + <code className="text-xs">isActive</code> để gói hiện
-            trên search public.
+            Mỗi gói cần ít nhất một quy tắc kênh khách lẻ (anonymous) đang bật để hiển thị trên website.
           </p>
         </div>
       </div>
@@ -165,7 +163,7 @@ export default function AdminSalePriceRulesPage() {
         onSubmit={(e) => void createSaleRule(e)}
         className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
       >
-        <h2 className="font-bold sm:col-span-2 lg:col-span-6">Tạo sale-price-rule</h2>
+        <h2 className="font-bold sm:col-span-2 lg:col-span-6">Tạo quy tắc giá mới</h2>
         <label className="block text-sm lg:col-span-2">
           <span className="mb-1 block font-semibold">Gói cước</span>
           <select

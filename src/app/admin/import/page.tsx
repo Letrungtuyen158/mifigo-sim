@@ -299,8 +299,6 @@ function AdminImportContent() {
           <div>
             <h2 className="font-bold">Import kho SIM/eSIM (Excel)</h2>
             <p className="mt-1 text-xs text-slate-500">
-              <code className="text-xs">POST /admin/import/sim-inventory</code>
-              {" · "}
               Cột eSIM: {SIM_INVENTORY_ESIM_COLUMNS.join(" · ")} · Cột SIM vật lý:{" "}
               {SIM_INVENTORY_PHYSICAL_COLUMNS.join(" · ")}
             </p>

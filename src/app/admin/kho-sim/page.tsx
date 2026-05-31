@@ -185,10 +185,7 @@ export default function AdminSimInventoryPage() {
       </div>
 
       <div className="card flex flex-wrap items-center gap-3 p-4 text-sm text-slate-600">
-        <span>
-          File mẫu Excel do backend generate —{" "}
-          <code className="text-xs">GET /admin/import/templates/:templateType</code>
-        </span>
+        <span>Tải file mẫu Excel trước khi import hoặc nhập kho.</span>
         {simTypeInput === "esim" || simTypeInput === "physical_sim" ? (
           <ImportTemplateDownloadButton
             templateType={simTypeToImportTemplate(simTypeInput)}
