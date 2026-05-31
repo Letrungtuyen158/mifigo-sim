@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
 import AdminPagination from "@/components/admin/AdminPagination";
 import ExcelFilePicker from "@/components/admin/ExcelFilePicker";
+import ImportTemplateDownloadButton from "@/components/admin/ImportTemplateDownloadButton";
+import { simTypeToImportTemplate } from "@/lib/admin-import-templates";
 import { fetchAdminSuppliers, fetchPackageSelectOptions } from "@/lib/admin-pricing";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
@@ -224,11 +226,14 @@ function AdminImportContent() {
       </div>
 
       <div className="card space-y-4 p-5">
-        <div>
-          <h2 className="font-bold">Import giá nhà cung cấp (Excel)</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Cột gợi ý: {SUPPLIER_PRICE_COLUMNS.join(" · ")}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-bold">Import giá nhà cung cấp (Excel)</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Cột gợi ý: {SUPPLIER_PRICE_COLUMNS.join(" · ")}
+            </p>
+          </div>
+          <ImportTemplateDownloadButton templateType="supplier-prices" />
         </div>
 
         <label className="block text-sm">
@@ -290,14 +295,17 @@ function AdminImportContent() {
       </div>
 
       <div className="card space-y-4 p-5">
-        <div>
-          <h2 className="font-bold">Import kho SIM/eSIM (Excel)</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            <code className="text-xs">POST /admin/import/sim-inventory</code>
-            {" · "}
-            Cột eSIM: {SIM_INVENTORY_ESIM_COLUMNS.join(" · ")} · Cột SIM vật lý:{" "}
-            {SIM_INVENTORY_PHYSICAL_COLUMNS.join(" · ")}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-bold">Import kho SIM/eSIM (Excel)</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              <code className="text-xs">POST /admin/import/sim-inventory</code>
+              {" · "}
+              Cột eSIM: {SIM_INVENTORY_ESIM_COLUMNS.join(" · ")} · Cột SIM vật lý:{" "}
+              {SIM_INVENTORY_PHYSICAL_COLUMNS.join(" · ")}
+            </p>
+          </div>
+          <ImportTemplateDownloadButton templateType={simTypeToImportTemplate(simType)} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
+import ImportTemplateDownloadButton from "@/components/admin/ImportTemplateDownloadButton";
+import { simTypeToImportTemplate } from "@/lib/admin-import-templates";
 import { fetchAdminSuppliers, fetchPackageSelectOptions } from "@/lib/admin-pricing";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
@@ -161,11 +164,37 @@ export default function AdminSimInventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black">Kho SIM / eSIM</h1>
-        <p className="text-sm text-slate-600">
-          Lọc theo gói cước, NCC, loại SIM hoặc trạng thái tồn kho.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black">Kho SIM / eSIM</h1>
+          <p className="text-sm text-slate-600">
+            Lọc theo gói cước, NCC, loại SIM hoặc trạng thái tồn kho. Import hàng loạt qua{" "}
+            <Link href="/admin/import" className="font-semibold text-[#1d6be8] hover:underline">
+              trang Import
+            </Link>
+            .
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ImportTemplateDownloadButton templateType="sim-inventory-esim" label="Tải mẫu eSIM" />
+          <ImportTemplateDownloadButton
+            templateType="sim-inventory-physical-sim"
+            label="Tải mẫu SIM vật lý"
+          />
+        </div>
+      </div>
+
+      <div className="card flex flex-wrap items-center gap-3 p-4 text-sm text-slate-600">
+        <span>
+          File mẫu Excel do backend generate —{" "}
+          <code className="text-xs">GET /admin/import/templates/:templateType</code>
+        </span>
+        {simTypeInput === "esim" || simTypeInput === "physical_sim" ? (
+          <ImportTemplateDownloadButton
+            templateType={simTypeToImportTemplate(simTypeInput)}
+            label={`Tải mẫu đang lọc (${formatSimType(simTypeInput)})`}
+          />
+        ) : null}
       </div>
 
       <form
