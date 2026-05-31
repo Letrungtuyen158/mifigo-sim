@@ -8,6 +8,12 @@ import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
 const LOW_STOCK_THRESHOLD = 10;
 
+function refName(ref: unknown): string {
+  if (!ref || typeof ref !== "object") return "—";
+  const name = (ref as Record<string, unknown>).name;
+  return name ? String(name) : "—";
+}
+
 export default function AdminSimInventoryPage() {
   const [page, setPage] = useState(1);
   const [lowStockPage, setLowStockPage] = useState(1);
@@ -108,7 +114,8 @@ export default function AdminSimInventoryPage() {
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>
-              <th className="py-2">ICCID</th>
+              <th className="py-2">Tên gói</th>
+              <th>ICCID</th>
               <th>Loại</th>
               <th>Trạng thái</th>
             </tr>
@@ -116,6 +123,7 @@ export default function AdminSimInventoryPage() {
           <tbody>
             {items.map((row) => (
               <tr key={docId(row)} className="border-t">
+                <td className="py-2">{refName(row.packageId)}</td>
                 <td className="py-2 font-mono text-xs">
                   {String(row.iccid || row.serialNumber || "—")}
                 </td>

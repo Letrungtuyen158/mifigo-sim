@@ -28,6 +28,21 @@ export function buildAdminListQuery(
   return params.toString();
 }
 
+/** Query string không có page/limit — dùng cho detail, best-supplier, v.v. */
+export function buildOptionalQuery(
+  extra?: Record<string, string | number | undefined>
+) {
+  const params = new URLSearchParams();
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value !== undefined && value !== "") {
+        params.set(key, String(value));
+      }
+    }
+  }
+  return params.toString();
+}
+
 export function normalizePaginated<T>(data: unknown, page: number, limit: number): AdminPaginated<T> {
   if (Array.isArray(data)) {
     const total = data.length;

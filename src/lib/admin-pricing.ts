@@ -8,6 +8,7 @@ import {
 import {
   ADMIN_LIST_LIMIT,
   buildAdminListQuery,
+  buildOptionalQuery,
   fetchAdminListItems,
   fetchAdminPaginated,
   paginatedItems,
@@ -66,8 +67,8 @@ export async function fetchAdminPackageDetail(
   channel = "retail",
   quantity = 1
 ): Promise<PackagePricingRow> {
-  const qs = buildAdminListQuery(1, 1, { channel, quantity });
-  const res = await fetch(`/api/admin/packages/${packageId}?${qs}`);
+  const qs = buildOptionalQuery({ channel, quantity });
+  const res = await fetch(`/api/admin/packages/${packageId}${qs ? `?${qs}` : ""}`);
   const data = await readJson<JsonDoc>(res);
   return mapAdminPackageListItem(data);
 }
@@ -154,8 +155,10 @@ export async function fetchBestSupplierComparison(
   quantity = 1,
   channel = "anonymous"
 ) {
-  const qs = buildAdminListQuery(1, 1, { quantity, channel });
-  const res = await fetch(`/api/admin/packages/${packageId}/best-supplier?${qs}`);
+  const qs = buildOptionalQuery({ quantity, channel });
+  const res = await fetch(
+    `/api/admin/packages/${packageId}/best-supplier${qs ? `?${qs}` : ""}`
+  );
   return readJson<Record<string, unknown>>(res);
 }
 
