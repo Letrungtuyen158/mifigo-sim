@@ -1,23 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, adminTableWrapClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
+const LOW_STOCK_THRESHOLD = 10;
+
 export default function AdminSimInventoryPage() {
   const [page, setPage] = useState(1);
+  const [lowStockPage, setLowStockPage] = useState(1);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
-  const [lowStock, setLowStock] = useState<Record<string, unknown>[]>([]);
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
+  const [lowStockItems, setLowStockItems] = useState<Record<string, unknown>[]>([]);
+  const [lowStockMeta, setLowStockMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
 
-  async function load(p = page) {
+  const loadInventory = useCallback(async (p = page) => {
     try {
-      const [inv, low] = await Promise.all([
-        fetchAdminPaginated<Record<string, unknown>>("/api/admin/sim-inventory", p),
-        fetch("/api/admin/sim-inventory/low-stock?threshold=10").then((r) => r.json()),
-      ]);
+      const inv = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/sim-inventory",
+        p
+      );
       setItems(inv.items);
       setMeta({
         total: inv.total,
@@ -26,34 +40,68 @@ export default function AdminSimInventoryPage() {
         page: inv.page,
       });
       setPage(inv.page);
-      setLowStock(Array.isArray(low.data) ? low.data : []);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải kho");
     }
-  }
+  }, [page]);
+
+  const loadLowStock = useCallback(async (p = lowStockPage) => {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/sim-inventory/low-stock",
+        p,
+        ADMIN_LIST_LIMIT,
+        { threshold: LOW_STOCK_THRESHOLD }
+      );
+      setLowStockItems(data.items);
+      setLowStockMeta({
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
+      });
+      setLowStockPage(data.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải cảnh báo tồn");
+    }
+  }, [lowStockPage]);
 
   useEffect(() => {
-    void load(page);
-  }, [page]);
+    void loadInventory(page);
+  }, [page, loadInventory]);
+
+  useEffect(() => {
+    void loadLowStock(lowStockPage);
+  }, [lowStockPage, loadLowStock]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black">Kho SIM / eSIM</h1>
 
       <div className="card p-4">
-        <h2 className="font-bold text-amber-800">Cảnh báo tồn thấp</h2>
+        <h2 className="font-bold text-amber-800">
+          Cảnh báo tồn thấp (≤ {LOW_STOCK_THRESHOLD} SIM)
+        </h2>
         <ul className="mt-2 space-y-1 text-sm">
-          {lowStock.length === 0 ? (
+          {lowStockItems.length === 0 ? (
             <li className="text-slate-500">Không có cảnh báo.</li>
           ) : (
-            lowStock.map((row, i) => (
-              <li key={i}>
-                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} · còn{" "}
+            lowStockItems.map((row, i) => (
+              <li key={i} className="admin-break-text">
+                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} ·{" "}
+                {String((row._id as Record<string, unknown>)?.simType || "")} · còn{" "}
                 {String(row.count)}
               </li>
             ))
           )}
         </ul>
+        <AdminPagination
+          page={lowStockMeta.page}
+          limit={lowStockMeta.limit}
+          total={lowStockMeta.total}
+          totalPages={lowStockMeta.totalPages}
+          onPageChange={setLowStockPage}
+        />
       </div>
 
       <div className={`card ${adminTableWrapClass} p-4`}>
@@ -68,7 +116,9 @@ export default function AdminSimInventoryPage() {
           <tbody>
             {items.map((row) => (
               <tr key={docId(row)} className="border-t">
-                <td className="py-2 font-mono text-xs">{String(row.iccid || row.serialNumber || "—")}</td>
+                <td className="py-2 font-mono text-xs">
+                  {String(row.iccid || row.serialNumber || "—")}
+                </td>
                 <td>{String(row.simType || "")}</td>
                 <td>{String(row.status || "")}</td>
               </tr>

@@ -1,10 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
 import { mapVnEsimFromApi } from "@/lib/api/mappers";
 import { getSessionUser } from "@/lib/auth";
+import { ADMIN_LIST_LIMIT } from "@/lib/admin-list";
 
-export async function GET() {
+interface PaginatedInventory {
+  items: Record<string, unknown>[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
     const token = await getAccessToken();
@@ -13,14 +22,20 @@ export async function GET() {
     }
 
     const isAdmin = user.role === "admin";
-    const path = isAdmin
-      ? "/admin/sim-inventory?limit=200"
-      : "/customer/orders?limit=50";
 
     if (isAdmin) {
-      const data = await apiRequest<{ items: Record<string, unknown>[] }>(path, {
-        token,
-      });
+      const { searchParams } = req.nextUrl;
+      const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+      const limit = Math.min(
+        100,
+        Math.max(1, Number(searchParams.get("limit") || String(ADMIN_LIST_LIMIT)) || ADMIN_LIST_LIMIT)
+      );
+      const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+
+      const data = await apiRequest<PaginatedInventory>(
+        `/admin/sim-inventory?${qs.toString()}`,
+        { token }
+      );
       const esims = (data.items || []).map(mapVnEsimFromApi);
       return NextResponse.json({
         success: true,
@@ -28,10 +43,21 @@ export async function GET() {
           ...e,
           canExport: true,
         })),
+        total: data.total,
+        page: data.page,
+        pageSize: data.limit,
+        totalPages: data.totalPages,
       });
     }
 
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({
+      success: true,
+      data: [],
+      total: 0,
+      page: 1,
+      pageSize: ADMIN_LIST_LIMIT,
+      totalPages: 1,
+    });
   } catch (error) {
     const { status, message } = toNextError(error, "Không thể tải eSIM");
     return NextResponse.json({ success: false, message }, { status });
