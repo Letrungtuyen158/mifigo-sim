@@ -250,32 +250,6 @@ export default function AdminSimInventoryPage() {
         </div>
       </form>
 
-      <div className="card p-4">
-        <h2 className="font-bold text-amber-800">
-          Cảnh báo tồn thấp (≤ {LOW_STOCK_THRESHOLD} SIM)
-        </h2>
-        <ul className="mt-2 space-y-1 text-sm">
-          {lowStockItems.length === 0 ? (
-            <li className="text-slate-500">Không có cảnh báo.</li>
-          ) : (
-            lowStockItems.map((row, i) => (
-              <li key={i} className="admin-break-text">
-                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} ·{" "}
-                {formatSimType(String((row._id as Record<string, unknown>)?.simType || ""))} · còn{" "}
-                {String(row.count)}
-              </li>
-            ))
-          )}
-        </ul>
-        <AdminPagination
-          page={lowStockMeta.page}
-          limit={lowStockMeta.limit}
-          total={lowStockMeta.total}
-          totalPages={lowStockMeta.totalPages}
-          onPageChange={setLowStockPage}
-        />
-      </div>
-
       <div className={`card ${adminTableWrapClass} p-4`}>
         {items.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-500">Không có SIM phù hợp bộ lọc.</p>
@@ -311,6 +285,32 @@ export default function AdminSimInventoryPage() {
           total={meta.total}
           totalPages={meta.totalPages}
           onPageChange={setPage}
+        />
+      </div>
+
+      <div className="card p-4">
+        <h2 className="font-bold text-amber-800">
+          Cảnh báo tồn thấp (≤ {LOW_STOCK_THRESHOLD} SIM)
+        </h2>
+        <ul className="mt-2 space-y-1 text-sm">
+          {lowStockItems.length === 0 ? (
+            <li className="text-slate-500">Không có cảnh báo.</li>
+          ) : (
+            lowStockItems.map((row, i) => (
+              <li key={i} className="admin-break-text">
+                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} ·{" "}
+                {formatSimType(String((row._id as Record<string, unknown>)?.simType || ""))} · còn{" "}
+                {String(row.count)}
+              </li>
+            ))
+          )}
+        </ul>
+        <AdminPagination
+          page={lowStockMeta.page}
+          limit={lowStockMeta.limit}
+          total={lowStockMeta.total}
+          totalPages={lowStockMeta.totalPages}
+          onPageChange={setLowStockPage}
         />
       </div>
     </div>
