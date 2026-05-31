@@ -10,6 +10,7 @@ import PackageFilterSidebar, {
 } from "@/components/packages/PackageFilterSidebar";
 import PackageResultList from "@/components/packages/PackageResultList";
 import Pagination from "@/components/ui/Pagination";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { addToCart } from "@/lib/cart";
 import { PACKAGE_PAGE_SIZE } from "@/lib/constants";
 import { buildTraCuuUrl } from "@/lib/searchUrl";
@@ -18,6 +19,7 @@ import type { PackageSearchResult } from "@/lib/types";
 function TraCuuContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const [results, setResults] = useState<PackageSearchResult[]>([]);
   const [role, setRole] = useState("guest");
   const [loading, setLoading] = useState(true);
@@ -125,34 +127,20 @@ function TraCuuContent() {
     <div className="container-page py-6 lg:py-8">
       <nav className="mb-4 text-sm text-slate-500">
         <Link href="/" className="hover:text-[#1d6be8]">
-          Trang chủ
+          {t("search.breadcrumbHome")}
         </Link>
         <span className="mx-2">›</span>
         <span className="font-medium text-slate-700">
-          {isEsim ? "eSIM" : "SIM vật lý"}
+          {isEsim ? "eSIM" : t("simType.physical")}
         </span>
       </nav>
 
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-black text-slate-900 sm:text-3xl">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#1d6be8"
-            strokeWidth="2"
-            aria-hidden
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-          Mua {isEsim ? "eSIM" : "SIM"} Du Lịch
+          {isEsim ? t("search.esimTravel") : t("search.physicalTravel")}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">
-          {isEsim
-            ? "eSIM là thẻ SIM kỹ thuật số nhúng sẵn trong điện thoại — kích hoạt trong 1 phút, không cần thẻ SIM vật lý."
-            : "SIM vật lý giao tận tay — phù hợp điện thoại chưa hỗ trợ eSIM hoặc cần SIM dự phòng."}
+          {isEsim ? t("search.esimDesc") : t("search.physicalDesc")}
         </p>
       </div>
 
@@ -178,51 +166,33 @@ function TraCuuContent() {
             className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center"
           >
             <div className="relative flex-1">
-              <svg
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
               <input
                 type="search"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder={`Tìm trong ${pagination.total} gói — tên, quốc gia, nhà cung cấp…`}
-                className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
+                placeholder={t("search.searchPlaceholder", {
+                  total: pagination.total,
+                })}
+                className="w-full rounded-xl border border-slate-200 py-3 pl-4 pr-4 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
               />
             </div>
             <button type="submit" className="btn-primary shrink-0 px-6">
-              Tìm kiếm
+              {t("common.search")}
             </button>
           </form>
 
           <p className="mb-4 text-sm text-slate-600">
-            Trang{" "}
-            <span className="font-semibold text-slate-900">
-              {pagination.page}/{pagination.totalPages}
-            </span>
-            :{" "}
-            <span className="font-semibold text-slate-900">
-              {results.length}
-            </span>{" "}
-            gói trên trang này (tổng{" "}
-            <span className="font-semibold text-slate-900">
-              {pagination.total}
-            </span>{" "}
-            gói).
+            {t("search.pageInfo", {
+              page: pagination.page,
+              totalPages: pagination.totalPages,
+              count: results.length,
+              total: pagination.total,
+            })}
           </p>
 
           {loading ? (
             <div className="card p-8 text-center text-slate-500">
-              Đang tải kết quả…
+              {t("search.loadingResults")}
             </div>
           ) : (
             <>
@@ -237,7 +207,7 @@ function TraCuuContent() {
                     simType: item.package.simType,
                     unitPrice: item.unitPrice,
                   });
-                  toast.success("Đã thêm vào giỏ hàng");
+                  toast.success(t("search.addedToCart"));
                 }}
               />
               <Pagination
@@ -255,8 +225,9 @@ function TraCuuContent() {
 }
 
 export default function TraCuuPage() {
+  const { t } = useTranslation();
   return (
-    <Suspense fallback={<div className="container-page py-8">Đang tải…</div>}>
+    <Suspense fallback={<div className="container-page py-8">{t("common.loading")}</div>}>
       <TraCuuContent />
     </Suspense>
   );

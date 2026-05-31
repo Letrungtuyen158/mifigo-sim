@@ -1,64 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 type SimTab = "esim" | "physical";
 
-const STEPS: Record<
-  SimTab,
-  { num: string; title: string; desc: string; emoji: string }[]
-> = {
-  esim: [
-    {
-      num: "01",
-      emoji: "🗺️",
-      title: "Chọn địa điểm và gói phù hợp",
-      desc: "Tra cứu gói eSIM theo quốc gia, số ngày, dung lượng GB và xem đơn giá.",
-    },
-    {
-      num: "02",
-      emoji: "💳",
-      title: "Thanh toán và nhận mã QR",
-      desc: "Tạo đơn, chuyển khoản theo bill. Nhân viên duyệt và gửi QR eSIM cho khách.",
-    },
-    {
-      num: "03",
-      emoji: "📱",
-      title: "Cài đặt và kích hoạt eSIM",
-      desc: "Quét mã QR trên điện thoại, bật eSIM là dùng ngay — chỉ mất 1–2 phút.",
-    },
-  ],
-  physical: [
-    {
-      num: "01",
-      emoji: "🗺️",
-      title: "Chọn gói SIM vật lý",
-      desc: "Lọc theo quốc gia, dung lượng, số ngày và xem giá SIM vật lý phù hợp.",
-    },
-    {
-      num: "02",
-      emoji: "💳",
-      title: "Đặt hàng & thanh toán",
-      desc: "Điền thông tin liên hệ, chuyển khoản theo hướng dẫn trên bill đơn hàng.",
-    },
-    {
-      num: "03",
-      emoji: "📦",
-      title: "Nhận SIM và kích hoạt",
-      desc: "Nhân viên giao SIM vật lý hoặc hướng dẫn lắp SIM, kích hoạt trước khi bay.",
-    },
-  ],
-};
-
 export default function OrderStepsSection() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<SimTab>("esim");
-  const steps = STEPS[tab];
+
+  const steps = useMemo(
+    () =>
+      tab === "esim"
+        ? [
+            { num: "01", emoji: "🗺️", title: t("home.step1EsimTitle"), desc: t("home.step1EsimDesc") },
+            { num: "02", emoji: "💳", title: t("home.step2EsimTitle"), desc: t("home.step2EsimDesc") },
+            { num: "03", emoji: "📱", title: t("home.step3EsimTitle"), desc: t("home.step3EsimDesc") },
+          ]
+        : [
+            { num: "01", emoji: "🗺️", title: t("home.step1PhysicalTitle"), desc: t("home.step1PhysicalDesc") },
+            { num: "02", emoji: "💳", title: t("home.step2PhysicalTitle"), desc: t("home.step2PhysicalDesc") },
+            { num: "03", emoji: "📦", title: t("home.step3PhysicalTitle"), desc: t("home.step3PhysicalDesc") },
+          ],
+    [tab, t]
+  );
 
   return (
     <section className="bg-white py-14">
       <div className="container-page">
-        <h2 className="text-2xl font-black text-slate-900">3 bước đặt SIM</h2>
+        <h2 className="text-2xl font-black text-slate-900">{t("home.orderStepsTitle")}</h2>
 
         <div className="mt-4 inline-flex rounded-full bg-slate-100 p-1">
           <button
@@ -105,7 +76,7 @@ export default function OrderStepsSection() {
             href={`/tra-cuu?simType=${tab}`}
             className="btn-primary inline-flex h-11 items-center px-8"
           >
-            {tab === "esim" ? "Khám phá eSIM" : "Khám phá SIM vật lý"}
+            {tab === "esim" ? t("home.exploreEsim") : t("home.explorePhysical")}
           </Link>
         </div>
       </div>

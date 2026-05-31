@@ -31,23 +31,12 @@ export const DAY_OPTIONS = [3, 5, 7, 10, 14, 20, 30] as const;
 export const PACKAGE_PAGE_SIZE = 12;
 
 export const REGIONS = [
-  "Châu Phi",
-  "Châu Á",
-  "Châu Âu",
-  "Châu Mỹ",
-  "Châu Đại Dương",
-  "Toàn cầu",
-] as const;
-
-export const DESTINATION_PILLS = [
-  { id: "all", label: "Tất cả" },
-  ...REGIONS.map((region) => ({ id: `region-${region}`, label: region, region })),
-  ...COUNTRIES.map((c) => ({
-    id: c.code,
-    label: c.name,
-    country: c.name,
-    flag: c.flag,
-  })),
+  "africa",
+  "asia",
+  "europe",
+  "americas",
+  "oceania",
+  "global",
 ] as const;
 
 export const SORT_OPTIONS = [

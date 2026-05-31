@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { cartTotal, clearCart, readCart, removeFromCart, type CartItem } from "@/lib/cart";
-import { formatSimType, formatVnd } from "@/lib/format";
+import { tSimType } from "@/lib/i18n";
+import { formatVnd } from "@/lib/format";
 
 export default function DatHangPage() {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,16 +25,16 @@ export default function DatHangPage() {
 
   function handleRemove(packageId: string) {
     setCart(removeFromCart(packageId));
-    toast.success("Đã xóa khỏi giỏ hàng");
+    toast.success(t("cart.removed"));
   }
 
   async function handleSubmit() {
     if (cart.length === 0) {
-      toast.error("Giỏ trống. Hãy tra cứu và thêm gói cước trước.");
+      toast.error(t("cart.emptyError"));
       return;
     }
     if (!name.trim() || !phone.trim() || !email.trim()) {
-      toast.error("Vui lòng điền đầy đủ thông tin liên hệ.");
+      toast.error(t("cart.infoError"));
       return;
     }
 
@@ -52,12 +55,12 @@ export default function DatHangPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Đặt hàng thất bại");
+      if (!res.ok) throw new Error(data.message || t("cart.submit"));
       clearCart();
-      toast.success("Đã tạo đơn hàng");
+      toast.success(t("cart.success"));
       router.push(`/don-hang/${data.data.code}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi đặt hàng");
+      toast.error(err instanceof Error ? err.message : t("cart.submit"));
     } finally {
       setSubmitting(false);
     }
@@ -65,19 +68,17 @@ export default function DatHangPage() {
 
   return (
     <div className="container-page py-8">
-      <h1 className="text-3xl font-black text-slate-900">Giỏ hàng</h1>
-      <p className="mt-2 text-slate-600">
-        Xem gói đã chọn, tạo đơn để nhân viên xuất bill và theo dõi thanh toán.
-      </p>
+      <h1 className="text-3xl font-black text-slate-900">{t("cart.title")}</h1>
+      <p className="mt-2 text-slate-600">{t("cart.subtitle")}</p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <div className="card p-5 lg:col-span-3">
-          <h2 className="font-bold">Giỏ hàng</h2>
+          <h2 className="font-bold">{t("cart.title")}</h2>
           {cart.length === 0 ? (
             <div className="mt-4 text-sm text-slate-500">
-              Chưa có gói nào.{" "}
+              {t("cart.empty")}{" "}
               <Link href="/tra-cuu" className="font-bold text-[#1d6be8]">
-                Tra cứu gói cước
+                {t("cart.searchFirst")}
               </Link>
             </div>
           ) : (
@@ -90,7 +91,8 @@ export default function DatHangPage() {
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold">{item.packageName}</div>
                     <div className="mt-1 text-slate-600">
-                      {item.country} · {formatSimType(item.simType)} · SL: {item.quantity}
+                      {item.country} · {tSimType(locale, item.simType)} · {t("cart.qty")}:{" "}
+                      {item.quantity}
                     </div>
                     <div className="mt-1 font-bold text-[#1d6be8]">
                       {formatVnd(item.unitPrice * item.quantity)}
@@ -98,7 +100,7 @@ export default function DatHangPage() {
                   </div>
                   <button
                     type="button"
-                    aria-label="Xóa khỏi giỏ hàng"
+                    aria-label={t("cart.removed")}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                     onClick={() => handleRemove(item.packageId)}
                   >
@@ -111,29 +113,29 @@ export default function DatHangPage() {
         </div>
 
         <div className="card p-5 lg:col-span-2">
-          <h2 className="font-bold">Thông tin đặt hàng</h2>
+          <h2 className="font-bold">{t("cart.orderInfo")}</h2>
           <div className="mt-4 space-y-3">
             <input
               className="w-full rounded-xl border px-3 py-2.5 text-sm"
-              placeholder="Họ tên *"
+              placeholder={t("cart.name")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
             <input
               className="w-full rounded-xl border px-3 py-2.5 text-sm"
-              placeholder="Số điện thoại *"
+              placeholder={t("cart.phone")}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <input
               className="w-full rounded-xl border px-3 py-2.5 text-sm"
-              placeholder="Email *"
+              placeholder={t("cart.email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
             <textarea
               className="w-full rounded-xl border px-3 py-2.5 text-sm"
-              placeholder="Ghi chú / mã giới thiệu"
+              placeholder={t("cart.note")}
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -142,7 +144,7 @@ export default function DatHangPage() {
 
           <div className="mt-4 border-t pt-4">
             <div className="flex items-center justify-between font-bold">
-              <span>Tổng tạm tính</span>
+              <span>{t("cart.subtotal")}</span>
               <span className="text-[#1d6be8]">{formatVnd(cartTotal(cart))}</span>
             </div>
             <button
@@ -151,7 +153,7 @@ export default function DatHangPage() {
               className="btn-primary mt-4 w-full disabled:opacity-60"
               onClick={() => void handleSubmit()}
             >
-              {submitting ? "Đang tạo đơn…" : "Tạo đơn hàng"}
+              {submitting ? t("cart.submitting") : t("cart.submit")}
             </button>
           </div>
         </div>

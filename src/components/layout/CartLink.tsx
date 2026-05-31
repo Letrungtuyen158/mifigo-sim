@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { cartCount, readCart } from "@/lib/cart";
 
 export default function CartLink({ className = "" }: { className?: string }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function CartLink({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/dat-hang"
-      aria-label="Giỏ hàng"
+      aria-label={t("common.cart")}
       aria-current={active ? "page" : undefined}
       className={`relative flex h-10 w-10 items-center justify-center rounded-xl border bg-white text-slate-800 shadow-sm transition hover:bg-slate-50 ${
         active

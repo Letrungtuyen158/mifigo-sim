@@ -1,12 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import {
-  DATA_GB_OPTIONS,
-  DAY_OPTIONS,
-  PACKAGE_TYPES,
-  SORT_OPTIONS,
-} from "@/lib/constants";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/contexts/LanguageContext";
+import { DATA_GB_OPTIONS, DAY_OPTIONS } from "@/lib/constants";
+import { tSortOption } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
 
 export interface SidebarFilterValues {
@@ -25,12 +22,14 @@ function PriceRangeSlider({
   max,
   valueMin,
   valueMax,
+  hint,
   onChange,
 }: {
   min: number;
   max: number;
   valueMin: number;
   valueMax: number;
+  hint: string;
   onChange: (min: number, max: number) => void;
 }) {
   const safeMin = Math.min(min, max);
@@ -39,9 +38,7 @@ function PriceRangeSlider({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs leading-relaxed text-slate-500">
-        Kéo hai nút để chọn khoảng giá. Giá trên thẻ có thể theo cấp CTV/Đại lý.
-      </p>
+      <p className="text-xs leading-relaxed text-slate-500">{hint}</p>
       <div className="relative h-6">
         <div className="absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-slate-200" />
         <div
@@ -83,6 +80,17 @@ function PriceRangeSlider({
   );
 }
 
+const SORT_VALUES = [
+  "price_asc",
+  "price_desc",
+  "days_asc",
+  "days_desc",
+  "data_asc",
+  "data_desc",
+] as const;
+
+const PACKAGE_TYPE_VALUES = ["daily", "total", "unlimited"] as const;
+
 export default function PackageFilterSidebar({
   initial,
   priceBounds,
@@ -94,12 +102,18 @@ export default function PackageFilterSidebar({
   onApply: (values: SidebarFilterValues) => void;
   onReset: () => void;
 }) {
+  const { t, locale } = useTranslation();
   const [values, setValues] = useState(initial);
   const [priceMin, setPriceMin] = useState(
     initial.minPrice ? Number(initial.minPrice) : priceBounds.min
   );
   const [priceMax, setPriceMax] = useState(
     initial.maxPrice ? Number(initial.maxPrice) : priceBounds.max
+  );
+
+  const sortOptions = useMemo(
+    () => SORT_VALUES.map((v) => ({ value: v, label: tSortOption(locale, v) })),
+    [locale]
   );
 
   useEffect(() => {
@@ -122,18 +136,18 @@ export default function PackageFilterSidebar({
 
   return (
     <form onSubmit={handleSubmit} className="card sticky top-24 space-y-5 p-5">
-      <h2 className="text-lg font-black text-slate-900">Bộ lọc</h2>
+      <h2 className="text-lg font-black text-slate-900">{t("search.filters")}</h2>
 
       <div>
         <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Sắp xếp theo
+          {t("search.sortBy")}
         </label>
         <select
           value={values.sort}
           onChange={(e) => setValues((v) => ({ ...v, sort: e.target.value }))}
           className={selectClass}
         >
-          {SORT_OPTIONS.map((opt) => (
+          {sortOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -143,7 +157,7 @@ export default function PackageFilterSidebar({
 
       <div>
         <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Loại gói cước
+          {t("search.packageType")}
         </label>
         <select
           value={values.packageType}
@@ -152,10 +166,10 @@ export default function PackageFilterSidebar({
           }
           className={selectClass}
         >
-          <option value="">Tất cả loại</option>
-          {PACKAGE_TYPES.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
+          <option value="">{t("common.allTypes")}</option>
+          {PACKAGE_TYPE_VALUES.map((p) => (
+            <option key={p} value={p}>
+              {t(`packageType.${p}`)}
             </option>
           ))}
         </select>
@@ -163,17 +177,17 @@ export default function PackageFilterSidebar({
 
       <div>
         <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Số ngày
+          {t("search.daysLabel")}
         </label>
         <select
           value={values.days}
           onChange={(e) => setValues((v) => ({ ...v, days: e.target.value }))}
           className={selectClass}
         >
-          <option value="">Tất cả</option>
+          <option value="">{t("common.all")}</option>
           {DAY_OPTIONS.map((d) => (
             <option key={d} value={String(d)}>
-              {d} ngày
+              {d} {t("common.days")}
             </option>
           ))}
         </select>
@@ -181,15 +195,15 @@ export default function PackageFilterSidebar({
 
       <div>
         <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Dung lượng
+          {t("search.dataLabel")}
         </label>
         <select
           value={values.dataGb}
           onChange={(e) => setValues((v) => ({ ...v, dataGb: e.target.value }))}
           className={selectClass}
         >
-          <option value="">Tất cả</option>
-          <option value="unlimited">Không giới hạn</option>
+          <option value="">{t("common.all")}</option>
+          <option value="unlimited">{t("search.unlimited")}</option>
           {DATA_GB_OPTIONS.map((gb) => (
             <option key={gb} value={String(gb)}>
               {gb} GB
@@ -200,29 +214,30 @@ export default function PackageFilterSidebar({
 
       <div>
         <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Loại SIM
+          {t("search.simType")}
         </label>
         <select
           value={values.simType}
           onChange={(e) => setValues((v) => ({ ...v, simType: e.target.value }))}
           className={selectClass}
         >
-          <option value="">eSIM & SIM vật lý</option>
-          <option value="esim">eSIM</option>
-          <option value="physical">SIM vật lý</option>
+          <option value="">{t("search.simAll")}</option>
+          <option value="esim">{t("simType.esim")}</option>
+          <option value="physical">{t("simType.physical")}</option>
         </select>
       </div>
 
       {priceBounds.max > 0 ? (
         <div>
           <label className="mb-1.5 block text-sm font-bold text-slate-800">
-            Giá tiền
+            {t("search.priceLabel")}
           </label>
           <PriceRangeSlider
             min={priceBounds.min}
             max={priceBounds.max}
             valueMin={priceMin}
             valueMax={priceMax}
+            hint={t("search.priceHint")}
             onChange={(nextMin, nextMax) => {
               setPriceMin(nextMin);
               setPriceMax(nextMax);
@@ -231,34 +246,19 @@ export default function PackageFilterSidebar({
         </div>
       ) : null}
 
-      <div>
-        <label className="mb-1.5 block text-sm font-bold text-slate-800">
-          Số lượng (đại lý)
-        </label>
-        <input
-          type="number"
-          min={1}
-          value={values.quantity}
-          onChange={(e) =>
-            setValues((v) => ({ ...v, quantity: e.target.value }))
-          }
-          className={selectClass}
-        />
-      </div>
-
       <div className="space-y-2 pt-1">
         <button
           type="submit"
           className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
         >
-          Áp dụng
+          {t("common.apply")}
         </button>
         <button
           type="button"
           onClick={onReset}
           className="w-full rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
         >
-          Đặt lại bộ lọc
+          {t("common.reset")}
         </button>
       </div>
     </form>

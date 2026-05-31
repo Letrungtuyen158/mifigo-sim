@@ -2,19 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 type AuthMode = "login" | "register" | "forgot";
 
-const TABS: { id: AuthMode; label: string }[] = [
-  { id: "login", label: "Đăng nhập" },
-  { id: "register", label: "Đăng ký" },
-];
-
 export default function DangNhapPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>("login");
   const [loading, setLoading] = useState(false);
 
@@ -24,6 +21,14 @@ export default function DangNhapPage() {
   const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [registerRole, setRegisterRole] = useState<"agent" | "customer">("agent");
+
+  const TABS = useMemo(
+    () => [
+      { id: "login" as const, label: t("auth.login") },
+      { id: "register" as const, label: t("auth.register") },
+    ],
+    [t]
+  );
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -35,12 +40,12 @@ export default function DangNhapPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Đăng nhập thất bại");
-      toast.success("Đăng nhập thành công");
+      if (!res.ok) throw new Error(data.message || t("auth.login"));
+      toast.success(t("auth.loginSuccess"));
       if (data.user.role === "admin") router.push("/admin");
       else router.push("/tra-cuu");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi đăng nhập");
+      toast.error(err instanceof Error ? err.message : t("auth.login"));
     } finally {
       setLoading(false);
     }
@@ -63,13 +68,13 @@ export default function DangNhapPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Đăng ký thất bại");
-      toast.success(data.message || "Đăng ký thành công");
+      if (!res.ok) throw new Error(data.message || t("auth.register"));
+      toast.success(data.message || t("auth.register"));
       setMode("login");
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi đăng ký");
+      toast.error(err instanceof Error ? err.message : t("auth.register"));
     } finally {
       setLoading(false);
     }
@@ -82,16 +87,16 @@ export default function DangNhapPage() {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, confirmPassword }),
+        body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Không thể đặt lại mật khẩu");
-      toast.success(data.message || "Đã đặt lại mật khẩu");
+      if (!res.ok) throw new Error(data.message || t("auth.forgot"));
+      toast.success(data.message || t("auth.forgot"));
       setMode("login");
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi quên mật khẩu");
+      toast.error(err instanceof Error ? err.message : t("auth.forgot"));
     } finally {
       setLoading(false);
     }
@@ -123,20 +128,18 @@ export default function DangNhapPage() {
             onClick={() => setMode("login")}
             className="mb-4 text-sm font-semibold text-[#1d6be8] hover:underline"
           >
-            ← Quay lại đăng nhập
+            {t("auth.backLogin")}
           </button>
         )}
 
         {mode === "login" && (
           <form onSubmit={(e) => void handleLogin(e)}>
-            <h1 className="text-2xl font-black">Đăng nhập</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Đại lý/CTV hoặc admin. Demo: admin@mifigo.com / Admin@123456
-            </p>
+            <h1 className="text-2xl font-black">{t("auth.login")}</h1>
+            <p className="mt-2 text-sm text-slate-600">{t("auth.loginHint")}</p>
             <div className="mt-5 space-y-3">
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                placeholder="Email"
+                placeholder={t("auth.email")}
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -144,17 +147,17 @@ export default function DangNhapPage() {
               />
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500">Mật khẩu</span>
+                  <span className="text-xs font-medium text-slate-500">{t("auth.password")}</span>
                   <button
                     type="button"
                     onClick={() => setMode("forgot")}
                     className="text-xs font-semibold text-[#1d6be8] hover:underline"
                   >
-                    Quên mật khẩu?
+                    {t("auth.forgotLink")}
                   </button>
                 </div>
                 <PasswordInput
-                  placeholder="Mật khẩu"
+                  placeholder={t("auth.password")}
                   autoComplete="current-password"
                   value={password}
                   onChange={setPassword}
@@ -162,27 +165,25 @@ export default function DangNhapPage() {
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary mt-5 w-full">
-              {loading ? "Đang đăng nhập…" : "Đăng nhập"}
+              {loading ? t("auth.loggingIn") : t("auth.login")}
             </button>
           </form>
         )}
 
         {mode === "register" && (
           <form onSubmit={(e) => void handleRegister(e)}>
-            <h1 className="text-2xl font-black">Đăng ký tài khoản</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Tạo tài khoản đại lý/CTV hoặc khách hàng để xem giá và đặt hàng.
-            </p>
+            <h1 className="text-2xl font-black">{t("auth.register")}</h1>
+            <p className="mt-2 text-sm text-slate-600">{t("auth.registerHint")}</p>
             <div className="mt-5 space-y-3">
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                placeholder="Họ tên *"
+                placeholder={t("auth.name")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                placeholder="Email *"
+                placeholder={t("auth.email")}
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -190,7 +191,7 @@ export default function DangNhapPage() {
               />
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                placeholder="Số điện thoại"
+                placeholder={t("auth.phone")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
@@ -201,33 +202,33 @@ export default function DangNhapPage() {
                   setRegisterRole(e.target.value as "agent" | "customer")
                 }
               >
-                <option value="agent">Đại lý / CTV</option>
-                <option value="customer">Khách hàng</option>
+                <option value="agent">{t("auth.roleAgent")}</option>
+                <option value="customer">{t("auth.roleCustomer")}</option>
               </select>
               <PasswordInput
-                placeholder="Mật khẩu * (tối thiểu 6 ký tự)"
+                placeholder={t("auth.passwordMin")}
                 autoComplete="new-password"
                 value={password}
                 onChange={setPassword}
               />
               <PasswordInput
-                placeholder="Xác nhận mật khẩu *"
+                placeholder={t("auth.confirmPassword")}
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary mt-5 w-full">
-              {loading ? "Đang đăng ký…" : "Đăng ký"}
+              {loading ? t("auth.registering") : t("auth.register")}
             </button>
             <p className="mt-3 text-center text-sm text-slate-600">
-              Đã có tài khoản?{" "}
+              {t("auth.hasAccount")}{" "}
               <button
                 type="button"
                 onClick={() => setMode("login")}
                 className="font-semibold text-[#1d6be8] hover:underline"
               >
-                Đăng nhập
+                {t("auth.login")}
               </button>
             </p>
           </form>
@@ -235,41 +236,27 @@ export default function DangNhapPage() {
 
         {mode === "forgot" && (
           <form onSubmit={(e) => void handleForgot(e)}>
-            <h1 className="text-2xl font-black">Quên mật khẩu</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Nhập email đã đăng ký và mật khẩu mới. (Giai đoạn sau sẽ gửi mã qua email.)
-            </p>
+            <h1 className="text-2xl font-black">{t("auth.forgot")}</h1>
+            <p className="mt-2 text-sm text-slate-600">{t("auth.forgotHint")}</p>
             <div className="mt-5 space-y-3">
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                placeholder="Email đã đăng ký *"
+                placeholder={t("auth.email")}
                 type="email"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <PasswordInput
-                placeholder="Mật khẩu mới *"
-                autoComplete="new-password"
-                value={password}
-                onChange={setPassword}
-              />
-              <PasswordInput
-                placeholder="Xác nhận mật khẩu mới *"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-              />
             </div>
             <button type="submit" disabled={loading} className="btn-primary mt-5 w-full">
-              {loading ? "Đang xử lý…" : "Đặt lại mật khẩu"}
+              {loading ? t("auth.processing") : t("auth.resetPassword")}
             </button>
           </form>
         )}
 
         {mode === "login" && (
           <Link href="/tra-cuu" className="mt-4 block text-center text-sm text-slate-500">
-            Tiếp tục xem giá lẻ (không đăng nhập)
+            {t("common.continueGuest")}
           </Link>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 function getPageItems(current: number, total: number): (number | "ellipsis")[] {
   if (total <= 7) {
@@ -36,6 +37,7 @@ export default function Pagination({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   if (totalPages <= 1) return null;
 
@@ -57,22 +59,17 @@ export default function Pagination({
   return (
     <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
       <p className="text-sm text-slate-600">
-        Hiển thị{" "}
-        <span className="font-semibold text-slate-900">
-          {from}–{to}
-        </span>{" "}
-        trong{" "}
-        <span className="font-semibold text-slate-900">{total}</span> gói
+        {t("pagination.showing", { from, to, total })}
       </p>
 
-      <nav className="flex flex-wrap items-center justify-center gap-1" aria-label="Phân trang">
+      <nav className="flex flex-wrap items-center justify-center gap-1" aria-label={t("pagination.aria")}>
         <button
           type="button"
           onClick={() => goToPage(page - 1)}
           disabled={page <= 1}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Trước
+          {t("pagination.prev")}
         </button>
 
         {pageItems.map((item, index) =>
@@ -107,7 +104,7 @@ export default function Pagination({
           disabled={page >= totalPages}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Sau
+          {t("pagination.next")}
         </button>
       </nav>
     </div>

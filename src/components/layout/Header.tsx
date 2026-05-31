@@ -2,21 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CartLink from "@/components/layout/CartLink";
 import BrandLogo from "@/components/layout/BrandLogo";
-
-const NAV = [
-  { href: "/", label: "Trang chủ" },
-  { href: "/tra-cuu", label: "Tra cứu gói" },
-  { href: "/huong-dan", label: "Hướng dẫn" },
-  { href: "/esim-vn", label: "eSIM VN" },
-];
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 export default function Header() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [role, setRole] = useState<string>("guest");
   const [open, setOpen] = useState(false);
+
+  const NAV = useMemo(
+    () => [
+      { href: "/", label: t("common.home") },
+      { href: "/tra-cuu", label: t("common.searchPackages") },
+      { href: "/huong-dan", label: t("common.guide") },
+      { href: "/esim-vn", label: t("common.esimVn") },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     void fetch("/api/auth/me")
@@ -51,16 +57,17 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSwitcher />
           <CartLink />
           <Link
             href="/tra-cuu?simType=esim"
             className="inline-flex h-10 items-center rounded-full bg-[#1d6be8] px-5 text-sm font-extrabold text-white shadow-md shadow-[#1d6be8]/30 transition hover:bg-[#1558c0]"
           >
-            Mua eSIM
+            {t("common.buyEsim")}
           </Link>
           {role === "admin" && (
             <Link href="/admin" className="rounded-full border px-4 py-2 text-sm font-semibold">
-              Quản trị
+              {t("common.admin")}
             </Link>
           )}
           {role === "guest" ? (
@@ -68,7 +75,7 @@ export default function Header() {
               href="/dang-nhap"
               className="inline-flex h-10 items-center rounded-full bg-[#f97316] px-5 text-sm font-extrabold text-white shadow-md shadow-[#f97316]/30 transition hover:bg-[#ea580c]"
             >
-              Đăng nhập
+              {t("common.login")}
             </Link>
           ) : (
             <button
@@ -80,18 +87,19 @@ export default function Header() {
                 );
               }}
             >
-              Đăng xuất
+              {t("common.logout")}
             </button>
           )}
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher />
           <CartLink />
           <button
             type="button"
             className="rounded-lg border px-3 py-2"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={t("common.menu")}
           >
             ☰
           </button>
@@ -116,10 +124,10 @@ export default function Header() {
               className="btn-primary mt-2 text-center"
               onClick={() => setOpen(false)}
             >
-              Mua eSIM
+              {t("common.buyEsim")}
             </Link>
             <Link href="/dang-nhap" className="btn-accent text-center" onClick={() => setOpen(false)}>
-              Đăng nhập
+              {t("common.login")}
             </Link>
           </div>
         </div>

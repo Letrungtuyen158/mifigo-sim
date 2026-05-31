@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { formatVnd } from "@/lib/format";
+import { tCountry } from "@/lib/i18n";
 import {
   POPULAR_COUNTRIES,
   POPULAR_REGION_TABS,
@@ -10,17 +12,27 @@ import {
 } from "@/lib/popularCountries";
 
 export default function PopularCountriesSection() {
+  const { t, locale } = useTranslation();
   const [tab, setTab] = useState<PopularRegionTab>("asia");
   const items = POPULAR_COUNTRIES[tab];
+
+  const tabs = useMemo(
+    () =>
+      POPULAR_REGION_TABS.map((item) => ({
+        ...item,
+        label: t(`popularRegion.${item.id}`),
+      })),
+    [t]
+  );
 
   return (
     <section className="container-page pb-16">
       <h2 className="text-center text-2xl font-black text-slate-900 sm:text-[26px]">
-        Quốc gia phổ biến
+        {t("home.popularCountries")}
       </h2>
 
       <div className="mt-5 flex flex-wrap justify-center gap-2">
-        {POPULAR_REGION_TABS.map((item) => (
+        {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -38,15 +50,24 @@ export default function PopularCountriesSection() {
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {items.map((item) => {
-          const searchName = item.searchCountry ?? item.name;
           const href =
-            item.priceLabel === "Liên hệ"
+            item.priceLabelKey === "contact"
               ? "/tra-cuu"
-              : `/tra-cuu?country=${encodeURIComponent(searchName)}&simType=esim`;
+              : item.countryCode
+                ? `/tra-cuu?countryCode=${item.countryCode}&simType=esim`
+                : item.regionKey
+                  ? `/tra-cuu?region=${item.regionKey}&simType=esim`
+                  : "/tra-cuu?simType=esim";
+
+          const priceText = item.priceLabelKey
+            ? t(`common.${item.priceLabelKey}`)
+            : item.priceFrom != null
+              ? t("common.fromPrice", { price: formatVnd(item.priceFrom) })
+              : t("common.searchPackagesLink");
 
           return (
             <Link
-              key={`${tab}-${item.name}`}
+              key={`${tab}-${item.nameKey}`}
               href={href}
               className="card flex items-center gap-3 p-3 transition hover:border-[#1d6be8]/40 hover:shadow-md sm:p-4"
             >
@@ -55,14 +76,11 @@ export default function PopularCountriesSection() {
               </span>
               <div className="min-w-0">
                 <div className="truncate text-sm font-black text-slate-900">
-                  {item.name}
+                  {item.countryCode
+                    ? tCountry(locale, item.countryCode)
+                    : t(`popularCountry.${item.nameKey}`)}
                 </div>
-                <div className="mt-0.5 text-xs font-bold text-[#1d6be8]">
-                  {item.priceLabel ??
-                    (item.priceFrom != null
-                      ? `Chỉ từ ${formatVnd(item.priceFrom)}`
-                      : "Tra cứu gói")}
-                </div>
+                <div className="mt-0.5 text-xs font-bold text-[#1d6be8]">{priceText}</div>
               </div>
             </Link>
           );

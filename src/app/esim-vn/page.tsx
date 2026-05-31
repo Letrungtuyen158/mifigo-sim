@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 interface VnEsimRow {
   id: string;
@@ -16,6 +17,7 @@ interface VnEsimRow {
 }
 
 export default function EsimVnPage() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<VnEsimRow[]>([]);
   const [role, setRole] = useState("guest");
 
@@ -32,7 +34,7 @@ export default function EsimVnPage() {
   function exportCsv() {
     const exportable = items.filter((i) => i.canExport || role === "admin");
     if (exportable.length === 0) {
-      toast.error("Chưa có eSIM được phép xuất (cần thanh toán & duyệt).");
+      toast.error(t("esimVn.exportEmpty"));
       return;
     }
     const header = ["ICCID", "Phone", "Serial", "Plan", "QR", "ActivationCode", "Status"];
@@ -63,13 +65,11 @@ export default function EsimVnPage() {
     <div className="container-page py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black">eSIM Việt Nam</h1>
-          <p className="mt-2 text-slate-600">
-            Khách xuất eSIM sau khi thanh toán được duyệt. Admin nhập từ Excel.
-          </p>
+          <h1 className="text-3xl font-black">{t("esimVn.title")}</h1>
+          <p className="mt-2 text-slate-600">{t("esimVn.subtitle")}</p>
         </div>
         <button type="button" className="btn-primary" onClick={exportCsv}>
-          Xuất CSV
+          {t("esimVn.exportCsv")}
         </button>
       </div>
 
@@ -77,10 +77,10 @@ export default function EsimVnPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
-              <th className="px-4 py-3">ICCID / SĐT</th>
-              <th className="px-4 py-3">Gói</th>
-              <th className="px-4 py-3">Trạng thái</th>
-              <th className="px-4 py-3">QR / Mã KH</th>
+              <th className="px-4 py-3">{t("esimVn.iccid")}</th>
+              <th className="px-4 py-3">{t("esimVn.plan")}</th>
+              <th className="px-4 py-3">{t("esimVn.status")}</th>
+              <th className="px-4 py-3">{t("esimVn.qr")}</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +99,7 @@ export default function EsimVnPage() {
                       <div className="text-slate-500">{item.activationCode}</div>
                     </>
                   ) : (
-                    <span className="text-amber-700">Thanh toán & duyệt để xem</span>
+                    <span className="text-amber-700">{t("esimVn.payToView")}</span>
                   )}
                 </td>
               </tr>
@@ -109,8 +109,7 @@ export default function EsimVnPage() {
       </div>
 
       <div className="card mt-6 bg-blue-50 p-5 text-sm text-blue-900">
-        <strong>Lưu ý thanh toán doanh nghiệp:</strong> Giai đoạn này dùng chuyển khoản thủ công +
-        duyệt bill. Kết nối cổng ngân hàng (VietQR/API) có thể bổ sung ở phase sau.
+        <strong>{t("esimVn.note")}</strong>
       </div>
     </div>
   );

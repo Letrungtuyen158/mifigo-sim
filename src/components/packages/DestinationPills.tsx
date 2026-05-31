@@ -1,19 +1,46 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { DESTINATION_PILLS } from "@/lib/constants";
+import { useMemo } from "react";
+import { useTranslation } from "@/contexts/LanguageContext";
+import { COUNTRIES, REGIONS } from "@/lib/constants";
+import { tCountry, tRegion } from "@/lib/i18n";
 import { buildTraCuuUrl } from "@/lib/searchUrl";
 
 export default function DestinationPills() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeCountry = searchParams.get("country") || "";
+  const { t, locale } = useTranslation();
+
+  const activeCountryCode = searchParams.get("countryCode") || "";
   const activeRegion = searchParams.get("region") || "";
 
-  function selectPill(pill: (typeof DESTINATION_PILLS)[number]) {
+  const pills = useMemo(
+    () => [
+      { id: "all", label: t("common.all") },
+      ...REGIONS.map((region) => ({
+        id: `region-${region}`,
+        label: tRegion(locale, region),
+        region,
+      })),
+      ...COUNTRIES.map((c) => ({
+        id: c.code,
+        label: tCountry(locale, c.code),
+        countryCode: c.code,
+        flag: c.flag,
+      })),
+    ],
+    [locale, t]
+  );
+
+  function selectPill(pill: (typeof pills)[number]) {
     if (pill.id === "all") {
       router.push(
-        buildTraCuuUrl(searchParams, { country: undefined, region: undefined })
+        buildTraCuuUrl(searchParams, {
+          countryCode: undefined,
+          country: undefined,
+          region: undefined,
+        })
       );
       return;
     }
@@ -22,33 +49,36 @@ export default function DestinationPills() {
       router.push(
         buildTraCuuUrl(searchParams, {
           region: pill.region,
+          countryCode: undefined,
           country: undefined,
         })
       );
       return;
     }
 
-    if ("country" in pill && pill.country) {
+    if ("countryCode" in pill && pill.countryCode) {
       router.push(
         buildTraCuuUrl(searchParams, {
-          country: pill.country,
+          countryCode: pill.countryCode,
+          country: undefined,
           region: undefined,
         })
       );
     }
   }
 
-  function isActive(pill: (typeof DESTINATION_PILLS)[number]) {
-    if (pill.id === "all") return !activeCountry && !activeRegion;
+  function isActive(pill: (typeof pills)[number]) {
+    if (pill.id === "all") return !activeCountryCode && !activeRegion;
     if ("region" in pill && pill.region) return activeRegion === pill.region;
-    if ("country" in pill && pill.country) return activeCountry === pill.country;
+    if ("countryCode" in pill && pill.countryCode)
+      return activeCountryCode === pill.countryCode;
     return false;
   }
 
   return (
     <div className="-mx-1 overflow-x-auto px-1 pb-1">
       <div className="flex min-w-max gap-2">
-        {DESTINATION_PILLS.map((pill) => {
+        {pills.map((pill) => {
           const active = isActive(pill);
           return (
             <button

@@ -11,7 +11,7 @@ export function buildTraCuuUrl(
     else params.set(key, value);
   }
 
-  if ("country" in updates || "region" in updates) {
+  if ("country" in updates || "region" in updates || "countryCode" in updates) {
     params.delete("page");
   }
 

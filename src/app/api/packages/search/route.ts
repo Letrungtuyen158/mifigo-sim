@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/mappers";
 import { decodeJwtPayload } from "@/lib/api/auth-token";
 import { PACKAGE_PAGE_SIZE } from "@/lib/constants";
+import { REGION_API_NAMES } from "@/lib/i18n/geo";
 
 interface PaginatedApi<T> {
   items: T[];
@@ -44,12 +45,16 @@ export async function GET(request: Request) {
     params.set("quantity", String(quantity));
     params.set("sortBy", mapSortToApi(searchParams.get("sort") || "price_asc"));
 
+    const countryCodeParam = searchParams.get("countryCode");
     const country = searchParams.get("country");
     const region = searchParams.get("region");
-    const countryCode = countryNameToCode(country || undefined);
+    const countryCode =
+      countryCodeParam || countryNameToCode(country || undefined);
     if (countryCode) params.set("countryCode", countryCode);
     else if (country) params.set("search", country);
-    if (region) params.set("regionName", region);
+    if (region) {
+      params.set("regionName", REGION_API_NAMES[region] || region);
+    }
 
     const packageType = searchParams.get("packageType");
     if (packageType) params.set("packageType", mapPackageTypeToApi(packageType));
