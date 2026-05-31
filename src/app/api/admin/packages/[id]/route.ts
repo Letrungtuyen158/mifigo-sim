@@ -1,11 +1,12 @@
+import { NextRequest } from "next/server";
 import { adminGet, adminPut } from "@/lib/api/admin-route";
 
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  return adminGet(`/admin/packages/${id}`);
+  return adminGet(`/admin/packages/${id}`, req);
 }
 
 export async function PUT(

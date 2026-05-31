@@ -1,19 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import {
   ADMIN_LIST_LIMIT,
+  fetchAdminPackagesWithPricing,
   fetchAdminSuppliers,
-  fetchSupplierPriceRows,
 } from "@/lib/admin-pricing";
+import { adminTableWrapClass } from "@/lib/admin-utils";
 import { formatDataGb, formatSimType, formatVnd } from "@/lib/format";
-import type { Supplier, SupplierPackage } from "@/lib/types";
+import type { PackagePricingRow, Supplier } from "@/lib/types";
 
-export default function AdminComparePage() {
+export default function AdminCompareListPage() {
   const [page, setPage] = useState(1);
-  const [packages, setPackages] = useState<SupplierPackage[]>([]);
+  const [rows, setRows] = useState<PackagePricingRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [meta, setMeta] = useState({
     total: 0,
@@ -22,25 +24,27 @@ export default function AdminComparePage() {
     page: 1,
   });
   const [country, setCountry] = useState("");
-  const [apiBest, setApiBest] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const [supplierRows, pricePage] = await Promise.all([
+      const [supplierRows, data] = await Promise.all([
         fetchAdminSuppliers(),
-        fetchSupplierPriceRows(p),
+        fetchAdminPackagesWithPricing(p, ADMIN_LIST_LIMIT, {
+          channel: "anonymous",
+          quantity: 1,
+        }),
       ]);
       setSuppliers(supplierRows);
-      setPackages(pricePage.items);
+      setRows(data.items);
       setMeta({
-        total: pricePage.total,
-        totalPages: pricePage.totalPages,
-        limit: pricePage.limit,
-        page: pricePage.page,
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
       });
-      setPage(pricePage.page);
+      setPage(data.page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải dữ liệu so sánh");
     } finally {
@@ -53,42 +57,15 @@ export default function AdminComparePage() {
   }, [page, load]);
 
   const countries = useMemo(
-    () => [...new Set(packages.map((p) => p.country))],
-    [packages]
+    () => [...new Set(rows.map((r) => r.country).filter(Boolean))],
+    [rows]
   );
 
-  const grouped = useMemo(() => {
-    const filtered = country
-      ? packages.filter((p) => p.country === country)
-      : packages;
-    const map = new Map<string, SupplierPackage[]>();
-    for (const pkg of filtered) {
-      const key = [
-        pkg.country,
-        pkg.simType,
-        pkg.packageType,
-        pkg.dataGb ?? "unl",
-        pkg.days,
-      ].join("|");
-      const list = map.get(key) ?? [];
-      list.push(pkg);
-      map.set(key, list);
-    }
-    return [...map.entries()].map(([key, list]) => ({
-      key,
-      list: [...list].sort((a, b) => a.costPrice - b.costPrice),
-      best: [...list].sort((a, b) => a.costPrice - b.costPrice)[0],
-    }));
-  }, [packages, country]);
+  const filtered = country ? rows.filter((r) => r.country === country) : rows;
 
-  async function fetchBestSupplier(packageMongoId: string) {
-    const res = await fetch(
-      `/api/admin/packages/${packageMongoId}/best-supplier?quantity=1&channel=anonymous`
-    );
-    const data = await res.json();
-    if (!res.ok) return toast.error(data.message || "Lỗi API best-supplier");
-    setApiBest(data.data as Record<string, unknown>);
-    toast.success("Đã gọi API best-supplier");
+  function supplierName(id: string | null) {
+    if (!id) return "—";
+    return suppliers.find((s) => s.id === id)?.name || "NCC";
   }
 
   return (
@@ -96,7 +73,8 @@ export default function AdminComparePage() {
       <div>
         <h1 className="text-2xl font-black">So sánh giá nhập NCC</h1>
         <p className="text-sm text-slate-600">
-          Chọn gói rẻ nhất theo từng nhóm quốc gia/GB/loại SIM để bán cạnh tranh.
+          List từ <code className="text-xs">GET /admin/packages</code> (giá vốn rẻ nhất + giá bán +
+          lợi nhuận). So sánh đầy đủ NCC ở trang chi tiết.
         </p>
       </div>
 
@@ -114,70 +92,65 @@ export default function AdminComparePage() {
         ))}
       </select>
 
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải…</p>
-      ) : null}
-
-      {apiBest?.bestSupplier ? (
-        <div className="card bg-blue-50 p-4 text-sm admin-break-text">
-          <strong>API best-supplier:</strong>{" "}
-          {String((apiBest.bestSupplier as Record<string, unknown>).supplierName)} — cost{" "}
-          {formatVnd(Number((apiBest.bestSupplier as Record<string, unknown>).costPrice))} — sale{" "}
-          {formatVnd(Number((apiBest.bestSupplier as Record<string, unknown>).salePrice))}
-        </div>
-      ) : null}
-
-      <div className="space-y-4">
-        {grouped.map(({ key, list, best }) => (
-          <div key={key} className="card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-bold">
-                {best.country} · {formatSimType(best.simType)} · {formatDataGb(best.dataGb)} ·{" "}
-                {best.days} ngày
-              </div>
-              {best.packageMongoId ? (
-                <button
-                  type="button"
-                  className="text-xs font-semibold text-[#1d6be8]"
-                  onClick={() => void fetchBestSupplier(best.packageMongoId!)}
-                >
-                  Gọi API best-supplier
-                </button>
-              ) : null}
-            </div>
-            <div className="mt-2 text-sm text-emerald-700">
-              Rẻ nhất: {suppliers.find((s) => s.id === best.supplierId)?.name} —{" "}
-              {formatVnd(best.costPrice)}
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {list.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`rounded-xl border p-3 text-sm ${
-                    pkg.id === best.id ? "border-emerald-300 bg-emerald-50" : ""
-                  }`}
-                >
-                  <div className="font-semibold">
-                    {suppliers.find((s) => s.id === pkg.supplierId)?.name}
-                  </div>
-                  <div>{pkg.name}</div>
-                  <div className="font-bold text-[#1d6be8]">
-                    {formatVnd(pkg.costPrice)}
-                  </div>
-                </div>
+      <div className={`card ${adminTableWrapClass} p-4`}>
+        {loading ? (
+          <p className="text-sm text-slate-500">Đang tải…</p>
+        ) : (
+          <table className="min-w-[820px] w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
+              <tr>
+                <th className="px-3 py-2">Gói</th>
+                <th className="px-3 py-2">NCC rẻ nhất</th>
+                <th className="px-3 py-2">Giá nhập</th>
+                <th className="px-3 py-2">Giá bán</th>
+                <th className="px-3 py-2">Lợi nhuận</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((row) => (
+                <tr key={row.packageId} className="border-t">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">{row.name}</div>
+                    <div className="text-xs text-slate-500">
+                      {formatSimType(row.simType)} · {formatDataGb(row.dataGb)} · {row.days} ngày
+                    </div>
+                  </td>
+                  <td className="px-3 py-2">{supplierName(row.supplierId)}</td>
+                  <td className="px-3 py-2">
+                    {row.costPrice != null ? formatVnd(row.costPrice) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {row.salePrice != null ? formatVnd(row.salePrice) : "—"}
+                  </td>
+                  <td
+                    className={`px-3 py-2 font-semibold ${
+                      (row.profit ?? 0) >= 0 ? "text-emerald-700" : "text-red-600"
+                    }`}
+                  >
+                    {row.profit != null ? formatVnd(row.profit) : "—"}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <Link
+                      href={`/admin/so-sanh/${row.packageId}`}
+                      className="text-sm font-semibold text-[#1d6be8] hover:underline"
+                    >
+                      So sánh NCC →
+                    </Link>
+                  </td>
+                </tr>
               ))}
-            </div>
-          </div>
-        ))}
+            </tbody>
+          </table>
+        )}
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
       </div>
-
-      <AdminPagination
-        page={meta.page}
-        limit={meta.limit}
-        total={meta.total}
-        totalPages={meta.totalPages}
-        onPageChange={setPage}
-      />
     </div>
   );
 }

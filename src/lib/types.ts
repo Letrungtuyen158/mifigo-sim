@@ -56,6 +56,29 @@ export interface SupplierPackage {
   active: boolean;
 }
 
+export interface PriceTier {
+  minQuantity: number;
+  maxQuantity: number | null;
+  salePrice: number;
+}
+
+/** Item từ GET /admin/packages — package + giá bán/vốn/lợi nhuận */
+export interface PackagePricingRow {
+  packageId: string;
+  name: string;
+  country: string;
+  simType: SimType;
+  packageType: PackageType;
+  dataGb: number | null;
+  days: number;
+  salePrice: number | null;
+  costPrice: number | null;
+  profit: number | null;
+  supplierId: string | null;
+  channel: string;
+  tiers: PriceTier[];
+}
+
 export interface ChannelPricing {
   id: string;
   packageId: string;

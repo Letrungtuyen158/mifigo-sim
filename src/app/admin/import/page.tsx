@@ -3,13 +3,41 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
+import ExcelFilePicker from "@/components/admin/ExcelFilePicker";
+import { fetchAdminSuppliers } from "@/lib/admin-pricing";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
-  fetchAdminListItems,
   fetchAdminPaginated,
   type AdminPaginated,
 } from "@/lib/admin-list";
+import type { Supplier } from "@/lib/types";
+
+const BATCH_TYPE_LABEL: Record<string, string> = {
+  supplier_price: "Giá NCC",
+  sim_inventory: "Kho SIM/eSIM",
+};
+
+const BATCH_STATUS_CLASS: Record<string, string> = {
+  processing: "bg-amber-50 text-amber-800 ring-amber-200/80",
+  completed: "bg-emerald-50 text-emerald-800 ring-emerald-200/80",
+  failed: "bg-red-50 text-red-800 ring-red-200/80",
+};
+
+const BATCH_STATUS_LABEL: Record<string, string> = {
+  processing: "Đang xử lý",
+  completed: "Hoàn tất",
+  failed: "Thất bại",
+};
+
+/** Cột Excel theo BE README — POST /admin/import/supplier-prices */
+const SUPPLIER_PRICE_COLUMNS = [
+  "package_slug hoặc package_id",
+  "cost_price",
+  "supplier_package_code",
+  "supplier_package_name",
+  "available_quantity",
+];
 
 export default function AdminImportPage() {
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
@@ -20,9 +48,11 @@ export default function AdminImportPage() {
     totalPages: 1,
   });
   const [page, setPage] = useState(1);
-  const [suppliers, setSuppliers] = useState<Record<string, unknown>[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(true);
   const [supplierId, setSupplierId] = useState("");
   const [packageId, setPackageId] = useState("");
+  const [importing, setImporting] = useState(false);
 
   const loadBatches = useCallback(async (p: number) => {
     try {
@@ -42,43 +72,130 @@ export default function AdminImportPage() {
   }, [page, loadBatches]);
 
   useEffect(() => {
-    void fetchAdminListItems<Record<string, unknown>>("/api/admin/suppliers")
+    setSuppliersLoading(true);
+    void fetchAdminSuppliers()
       .then((data) => {
         setSuppliers(data);
-        if (data[0]) setSupplierId(docId(data[0]));
+        if (data[0]) setSupplierId(data[0].id);
       })
-      .catch(() => toast.error("Lỗi tải NCC"));
+      .catch(() => toast.error("Lỗi tải NCC"))
+      .finally(() => setSuppliersLoading(false));
   }, []);
 
-  async function importPrices(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !supplierId) return;
-    const fd = new FormData();
-    fd.set("file", file);
-    fd.set("supplierId", supplierId);
-    if (packageId.trim()) fd.set("packageId", packageId.trim());
-    const res = await fetch("/api/admin/import/supplier-prices", { method: "POST", body: fd });
-    const data = await res.json();
-    if (!res.ok) return toast.error(data.message || "Import thất bại");
-    toast.success(`Import xong: ${data.data?.successRows ?? 0} dòng OK`);
-    setPage(1);
-    void loadBatches(1);
-    e.target.value = "";
+  async function importPrices(file: File) {
+    if (!supplierId) {
+      toast.error("Vui lòng chọn nhà cung cấp.");
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("supplierId", supplierId);
+      if (packageId.trim()) fd.set("packageId", packageId.trim());
+
+      const res = await fetch("/api/admin/import/supplier-prices", {
+        method: "POST",
+        body: fd,
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        data?: { successRows?: number; failedRows?: number };
+        message?: string;
+      };
+
+      if (!res.ok) {
+        toast.error(json.message || "Import thất bại");
+        return;
+      }
+
+      const ok = json.data?.successRows ?? 0;
+      const failed = json.data?.failedRows ?? 0;
+      if (failed > 0) {
+        toast.success(`Import xong: ${ok} dòng OK, ${failed} lỗi`);
+      } else {
+        toast.success(`Import xong: ${ok} dòng OK`);
+      }
+
+      setPage(1);
+      void loadBatches(1);
+    } catch {
+      toast.error("Import thất bại");
+    } finally {
+      setImporting(false);
+    }
   }
+
+  const canImport = Boolean(supplierId) && !suppliersLoading;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-black">Import dữ liệu</h1>
+      <div>
+        <h1 className="text-2xl font-black">Import dữ liệu</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          API: <code className="text-xs">POST /admin/import/supplier-prices</code> — multipart{" "}
+          <code className="text-xs">file</code>, <code className="text-xs">supplierId</code>,{" "}
+          <code className="text-xs">packageId</code> (tùy chọn).
+        </p>
+      </div>
 
-      <div className="card space-y-3 p-5">
-        <h2 className="font-bold">Import giá nhà cung cấp (Excel)</h2>
-        <select className={inputClass} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-          {suppliers.map((s) => (
-            <option key={docId(s)} value={docId(s)}>{String(s.name)} ({String(s.code)})</option>
-          ))}
-        </select>
-        <input className={inputClass} placeholder="packageId mặc định (tùy chọn)" value={packageId} onChange={(e) => setPackageId(e.target.value)} />
-        <input type="file" accept=".xlsx,.xls" onChange={(e) => void importPrices(e)} />
+      <div className="card space-y-4 p-5">
+        <div>
+          <h2 className="font-bold">Import giá nhà cung cấp (Excel)</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Cột gợi ý: {SUPPLIER_PRICE_COLUMNS.join(" · ")}
+          </p>
+        </div>
+
+        <label className="block text-sm">
+          <span className="mb-1 block font-semibold text-slate-700">
+            Nhà cung cấp <span className="text-red-500">*</span>
+          </span>
+          <select
+            className={inputClass}
+            value={supplierId}
+            disabled={suppliersLoading || importing}
+            onChange={(e) => setSupplierId(e.target.value)}
+          >
+            {suppliers.length === 0 ? (
+              <option value="">
+                {suppliersLoading ? "Đang tải…" : "Chưa có NCC — tạo ở Admin trước"}
+              </option>
+            ) : (
+              suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.code})
+                </option>
+              ))
+            )}
+          </select>
+        </label>
+
+        <label className="block text-sm">
+          <span className="mb-1 block font-semibold text-slate-700">
+            packageId mặc định
+            <span className="ml-1 font-normal text-slate-500">(tùy chọn — MongoDB ObjectId)</span>
+          </span>
+          <input
+            className={inputClass}
+            placeholder="665a1b2c3d4e5f6789012345"
+            value={packageId}
+            disabled={importing}
+            onChange={(e) => setPackageId(e.target.value)}
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Dùng khi file Excel không có cột package_slug / package_id.
+          </p>
+        </label>
+
+        <ExcelFilePicker
+          disabled={!canImport}
+          loading={importing}
+          label="Import file Excel"
+          hint="Kéo thả hoặc bấm để chọn file .xlsx / .xls"
+          onFileSelect={importPrices}
+        />
       </div>
 
       <div className={`card ${adminTableWrapClass} p-4`}>
@@ -94,15 +211,39 @@ export default function AdminImportPage() {
             </tr>
           </thead>
           <tbody>
-            {list.items.map((b) => (
-              <tr key={docId(b)} className="border-t">
-                <td className="py-2">{String(b.fileName)}</td>
-                <td>{String(b.type)}</td>
-                <td>{String(b.successRows)}</td>
-                <td>{String(b.failedRows)}</td>
-                <td>{String(b.status)}</td>
+            {list.items.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-6 text-center text-slate-500">
+                  Chưa có lịch sử import.
+                </td>
               </tr>
-            ))}
+            ) : (
+              list.items.map((b) => {
+                const status = String(b.status || "");
+                return (
+                  <tr key={docId(b)} className="border-t">
+                    <td className="max-w-[200px] truncate py-2" title={String(b.fileName)}>
+                      {String(b.fileName)}
+                    </td>
+                    <td>{BATCH_TYPE_LABEL[String(b.type)] || String(b.type)}</td>
+                    <td className="font-semibold text-emerald-700">{String(b.successRows ?? 0)}</td>
+                    <td className={Number(b.failedRows) > 0 ? "font-semibold text-red-600" : ""}>
+                      {String(b.failedRows ?? 0)}
+                    </td>
+                    <td>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset ${
+                          BATCH_STATUS_CLASS[status] ??
+                          "bg-slate-100 text-slate-700 ring-slate-200/80"
+                        }`}
+                      >
+                        {BATCH_STATUS_LABEL[status] || status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
         <AdminPagination

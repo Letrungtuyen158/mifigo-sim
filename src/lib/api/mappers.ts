@@ -4,6 +4,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  PackagePricingRow,
   PackageSearchResult,
   PackageType,
   SimType,
@@ -217,6 +218,45 @@ export function mapSearchResultFromApi(item: MongoDoc): PackageSearchResult {
     pricing,
     unitPrice: salePrice,
     priceTiers: priceTiers.length > 1 ? priceTiers : undefined,
+  };
+}
+
+export function mapAdminPackageListItem(item: MongoDoc): PackagePricingRow {
+  const pkg = (item.package || item) as MongoDoc;
+  const supplierRaw = item.supplierId;
+  const supplierId =
+    supplierRaw == null
+      ? null
+      : typeof supplierRaw === "object"
+        ? idOf(supplierRaw as MongoDoc)
+        : String(supplierRaw);
+  const mapped = mapPackageFromApi(
+    pkg,
+    supplierId || undefined,
+    Number(item.costPrice || 0)
+  );
+
+  return {
+    packageId: idOf(pkg),
+    name: mapped.name,
+    country: mapped.country,
+    simType: mapped.simType,
+    packageType: mapped.packageType,
+    dataGb: mapped.dataGb,
+    days: mapped.days,
+    salePrice: item.salePrice != null ? Number(item.salePrice) : null,
+    costPrice: item.costPrice != null ? Number(item.costPrice) : null,
+    profit: item.profit != null ? Number(item.profit) : null,
+    supplierId,
+    channel: String(item.channel || "anonymous"),
+    tiers: ((item.tiers as MongoDoc[] | undefined) || []).map((t) => ({
+      minQuantity: Number(t.minQuantity || 1),
+      maxQuantity:
+        t.maxQuantity != null && t.maxQuantity !== ""
+          ? Number(t.maxQuantity)
+          : null,
+      salePrice: Number(t.salePrice || 0),
+    })),
   };
 }
 
