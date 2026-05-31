@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { inputClass } from "@/lib/admin-utils";
+import { inputClass, adminPageHeaderClass, adminTableWrapClass } from "@/lib/admin-utils";
 import { formatVnd } from "@/lib/format";
 import type { ChannelPricing, SupplierPackage } from "@/lib/types";
 
@@ -76,20 +76,20 @@ export default function AdminPricingPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className={adminPageHeaderClass}>
         <div>
           <h1 className="text-2xl font-black">Giá bán kênh</h1>
           <p className="text-sm text-slate-600">
             Giá lẻ + 3 bậc giá đại lý theo số lượng.
           </p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => void save()}>
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => void save()}>
           Lưu thay đổi
         </button>
       </div>
 
-      <div className="card overflow-x-auto">
-        <table className="min-w-[980px] text-sm">
+      <div className={`card ${adminTableWrapClass} p-4`}>
+        <table className="min-w-[980px] w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-3 py-2">Gói</th>

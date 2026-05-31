@@ -97,11 +97,11 @@ export default async function AdminDashboardPage() {
         <h2 className="font-bold">Đơn hàng gần đây</h2>
         <div className="mt-4 space-y-2 text-sm">
           {stats.recentOrders.map((o) => (
-            <div key={o.id} className="flex justify-between border-b py-2">
-              <span>
+            <div key={o.id} className="flex flex-col gap-1 border-b py-2 sm:flex-row sm:items-center sm:justify-between">
+              <span className="admin-break-text min-w-0">
                 {o.code} · {o.customerName}
               </span>
-              <span className="font-semibold">{formatVnd(o.total)}</span>
+              <span className="shrink-0 font-semibold">{formatVnd(o.total)}</span>
             </div>
           ))}
           {stats.recentOrders.length === 0 && (

@@ -37,6 +37,22 @@ body {
   @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
 }
 
+.admin-main {
+  @apply min-w-0 w-full max-w-full;
+}
+
+.admin-table-scroll {
+  @apply min-w-0 max-w-full overflow-x-auto overscroll-x-contain;
+}
+
+.admin-page-header {
+  @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
+}
+
+.admin-break-text {
+  @apply break-words [overflow-wrap:anywhere];
+}
+
 .range-thumb {
   margin: 0;
 }

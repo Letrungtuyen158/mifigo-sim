@@ -93,7 +93,7 @@ export default function AdminUsersPage() {
         {list.items.map((u) => {
           const id = docId(u);
           return (
-            <div key={id} className="grid gap-2 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-4">
+            <div key={id} className="grid min-w-0 gap-2 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-4">
               <div className="font-semibold">{String(u.fullName || "")}</div>
               <div className="text-sm text-slate-600">{String(u.email || "")}</div>
               <select

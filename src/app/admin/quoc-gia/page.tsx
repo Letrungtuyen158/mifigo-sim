@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
-import { docId, inputClass } from "@/lib/admin-utils";
+import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
   fetchAdminPaginated,
@@ -86,8 +86,8 @@ export default function AdminCountriesPage() {
         </label>
         <button type="submit" className="btn-primary sm:col-span-2">Thêm quốc gia</button>
       </form>
-      <div className="card overflow-x-auto p-4">
-        <table className="min-w-full text-sm">
+      <div className={`card ${adminTableWrapClass} p-4`}>
+        <table className="min-w-[520px] w-full text-sm">
           <thead className="bg-slate-50 text-left">
             <tr>
               <th className="px-3 py-2">Tên</th>

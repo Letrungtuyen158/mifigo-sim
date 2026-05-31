@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
-import { inputClass } from "@/lib/admin-utils";
+import { inputClass, adminPageHeaderClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
   fetchAdminPaginated,
@@ -99,9 +99,9 @@ export default function AdminSuppliersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className={`${adminPageHeaderClass}`}>
         <h1 className="text-2xl font-black">Nhà cung cấp</h1>
-        <button type="button" className="btn-primary" onClick={() => void save()}>
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => void save()}>
           Lưu trang này
         </button>
       </div>
@@ -116,7 +116,7 @@ export default function AdminSuppliersPage() {
         {rows.map((s) => (
           <div key={s.id} className="grid gap-3 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-3">
             <input
-              className="rounded border px-3 py-2 text-sm"
+              className={`${inputClass} min-w-0`}
               value={s.name}
               onChange={(e) => updateRow(s.id, { name: e.target.value })}
             />

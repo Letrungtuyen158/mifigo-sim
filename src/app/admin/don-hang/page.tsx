@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import OrderStatusBadge from "@/components/admin/OrderStatusBadge";
-import { mapOrderFromApi } from "@/lib/api/mappers";
+import { mapOrderFromApi, mapOrderStatusToApi } from "@/lib/api/mappers";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
-import { formatVnd } from "@/lib/format";
+import { inputClass, adminBreakTextClass } from "@/lib/admin-utils";
+import { formatOrderStatus, formatVnd } from "@/lib/format";
 import {
   ORDER_ACTION_ACTIVE,
   ORDER_ACTION_IDLE,
@@ -15,8 +16,22 @@ import {
 } from "@/lib/order-status-ui";
 import type { Order, OrderStatus } from "@/lib/types";
 
+const STATUS_FILTER_VALUES: (OrderStatus | "")[] = [
+  "",
+  "pending_payment",
+  "payment_review",
+  "paid",
+  "processing",
+  "completed",
+  "cancelled",
+];
+
 export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [statusInput, setStatusInput] = useState<OrderStatus | "">("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedStatus, setAppliedStatus] = useState<OrderStatus | "">("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [meta, setMeta] = useState({
     total: 0,
@@ -25,28 +40,52 @@ export default function AdminOrdersPage() {
     page: 1,
   });
 
-  async function load(p = page) {
-    try {
-      const data = await fetchAdminPaginated<Record<string, unknown>>(
-        "/api/admin/orders",
-        p
-      );
-      setOrders(data.items.map((o) => mapOrderFromApi(o)));
-      setMeta({
-        total: data.total,
-        totalPages: data.totalPages,
-        limit: data.limit,
-        page: data.page,
-      });
-      setPage(data.page);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Lỗi tải đơn");
-    }
-  }
+  const load = useCallback(
+    async (p = page) => {
+      try {
+        const extra: Record<string, string> = {};
+        if (appliedSearch) extra.search = appliedSearch;
+        if (appliedStatus) extra.status = mapOrderStatusToApi(appliedStatus);
+
+        const data = await fetchAdminPaginated<Record<string, unknown>>(
+          "/api/admin/orders",
+          p,
+          ADMIN_LIST_LIMIT,
+          extra
+        );
+        setOrders(data.items.map((o) => mapOrderFromApi(o)));
+        setMeta({
+          total: data.total,
+          totalPages: data.totalPages,
+          limit: data.limit,
+          page: data.page,
+        });
+        setPage(data.page);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Lỗi tải đơn");
+      }
+    },
+    [page, appliedSearch, appliedStatus]
+  );
 
   useEffect(() => {
     void load(page);
-  }, [page]);
+  }, [page, appliedSearch, appliedStatus, load]);
+
+  function applyFilters(e?: FormEvent) {
+    e?.preventDefault();
+    setAppliedSearch(searchInput.trim());
+    setAppliedStatus(statusInput);
+    setPage(1);
+  }
+
+  function resetFilters() {
+    setSearchInput("");
+    setStatusInput("");
+    setAppliedSearch("");
+    setAppliedStatus("");
+    setPage(1);
+  }
 
   async function issueInvoice(orderId: string) {
     const res = await fetch(`/api/admin/orders/${orderId}/invoice`, { method: "POST" });
@@ -69,6 +108,8 @@ export default function AdminOrdersPage() {
     void load(page);
   }
 
+  const hasActiveFilters = Boolean(appliedSearch || appliedStatus);
+
   return (
     <div className="space-y-4">
       <div>
@@ -78,7 +119,51 @@ export default function AdminOrdersPage() {
         </p>
       </div>
 
-      <div className="mb-2 flex flex-wrap gap-2 text-xs text-slate-600">
+      <form
+        onSubmit={applyFilters}
+        className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end"
+      >
+        <label className="min-w-0 flex-1 sm:min-w-[220px]">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Mã đơn</span>
+          <input
+            type="search"
+            className={inputClass}
+            placeholder="ORD-BULK-0046…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+        </label>
+        <label className="w-full sm:w-52">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Trạng thái</span>
+          <select
+            className={inputClass}
+            value={statusInput}
+            onChange={(e) => setStatusInput(e.target.value as OrderStatus | "")}
+          >
+            {STATUS_FILTER_VALUES.map((value) => (
+              <option key={value || "all"} value={value}>
+                {value ? formatOrderStatus(value) : "Tất cả trạng thái"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary px-5 py-2 text-sm">
+            Lọc
+          </button>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={resetFilters}
+            >
+              Xóa lọc
+            </button>
+          ) : null}
+        </div>
+      </form>
+
+      <div className="flex flex-wrap gap-2 text-xs text-slate-600">
         <span className="font-semibold text-slate-800">Chú thích:</span>
         <OrderStatusBadge status="pending_payment" />
         <OrderStatusBadge status="payment_review" />
@@ -86,6 +171,14 @@ export default function AdminOrdersPage() {
         <OrderStatusBadge status="completed" />
         <OrderStatusBadge status="cancelled" />
       </div>
+
+      {hasActiveFilters ? (
+        <p className="text-sm text-slate-600">
+          {meta.total} đơn phù hợp
+          {appliedSearch ? ` · mã "${appliedSearch}"` : ""}
+          {appliedStatus ? ` · ${formatOrderStatus(appliedStatus)}` : ""}
+        </p>
+      ) : null}
 
       <div className="space-y-3">
         {orders.map((order) => (
@@ -96,7 +189,7 @@ export default function AdminOrdersPage() {
                   <div className="font-bold">{order.code}</div>
                   <OrderStatusBadge status={order.status} />
                 </div>
-                <div className="mt-1 text-sm text-slate-600">
+                <div className={`mt-1 text-sm text-slate-600 ${adminBreakTextClass}`}>
                   {order.customerName} · {order.customerPhone} · {order.customerEmail}
                 </div>
                 {order.paymentProof && (
@@ -150,7 +243,9 @@ export default function AdminOrdersPage() {
           </div>
         ))}
         {orders.length === 0 && (
-          <div className="card p-6 text-slate-500">Chưa có đơn hàng.</div>
+          <div className="card p-6 text-slate-500">
+            {hasActiveFilters ? "Không có đơn phù hợp bộ lọc." : "Chưa có đơn hàng."}
+          </div>
         )}
       </div>
 

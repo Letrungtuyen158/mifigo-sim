@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
-import { docId } from "@/lib/admin-utils";
+import { docId, adminTableWrapClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
 export default function AdminActivityLogsPage() {
@@ -37,7 +37,7 @@ export default function AdminActivityLogsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-black">Nhật ký hoạt động</h1>
-      <div className="card overflow-x-auto p-4">
+      <div className={`card ${adminTableWrapClass} p-4`}>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>

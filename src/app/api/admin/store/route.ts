@@ -32,13 +32,13 @@ export async function GET() {
 
     const [suppliersPage, packagesPage, saleRulesPage, ordersPage, inventoryPage] =
       await Promise.all([
-        apiRequest<Paginated<MongoDoc>>("/admin/suppliers?limit=100", { token }),
-        apiRequest<Paginated<MongoDoc>>("/admin/packages?limit=100", { token }),
-        apiRequest<Paginated<MongoDoc>>("/admin/sale-price-rules?limit=100", {
+        apiRequest<Paginated<MongoDoc>>("/admin/suppliers?limit=10", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/packages?limit=10", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/sale-price-rules?limit=10", {
           token,
         }),
-        apiRequest<Paginated<MongoDoc>>("/admin/orders?limit=100", { token }),
-        apiRequest<Paginated<MongoDoc>>("/admin/sim-inventory?limit=100", {
+        apiRequest<Paginated<MongoDoc>>("/admin/orders?limit=10", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/sim-inventory?limit=10", {
           token,
         }),
       ]);

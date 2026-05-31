@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { formatVnd } from "@/lib/format";
 import type { Supplier, SupplierPackage } from "@/lib/types";
+import { adminPageHeaderClass, adminTableWrapClass } from "@/lib/admin-utils";
 
 export default function AdminPackagesPage() {
   const [packages, setPackages] = useState<SupplierPackage[]>([]);
@@ -36,18 +37,18 @@ export default function AdminPackagesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className={adminPageHeaderClass}>
         <div>
           <h1 className="text-2xl font-black">Gói cước & giá nhập</h1>
           <p className="text-sm text-slate-600">Admin nhập đơn giá từng nhà cung cấp.</p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => void save()}>
+        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => void save()}>
           Lưu
         </button>
       </div>
 
-      <div className="card overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className={`card ${adminTableWrapClass} p-4`}>
+        <table className="min-w-[640px] w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-3 py-2">Gói</th>

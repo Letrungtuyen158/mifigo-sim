@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
-import { docId, inputClass } from "@/lib/admin-utils";
+import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
   fetchAdminListItems,
@@ -81,7 +81,7 @@ export default function AdminImportPage() {
         <input type="file" accept=".xlsx,.xls" onChange={(e) => void importPrices(e)} />
       </div>
 
-      <div className="card overflow-x-auto p-4">
+      <div className={`card ${adminTableWrapClass} p-4`}>
         <h2 className="mb-3 font-bold">Lịch sử import</h2>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
