@@ -34,6 +34,10 @@ function TraCuuContent() {
 
   const simType = searchParams.get("simType") || "esim";
   const isEsim = simType !== "physical";
+  const listQuantity = Math.min(
+    99,
+    Math.max(1, Number(searchParams.get("quantity") || "1") || 1)
+  );
 
   const sidebarInitial = useMemo<SidebarFilterValues>(
     () => ({
@@ -199,13 +203,15 @@ function TraCuuContent() {
               <PackageResultList
                 results={results}
                 role={role}
-                onAdd={(item) => {
+                defaultQuantity={listQuantity}
+                onAdd={(item, quantity) => {
                   addToCart({
                     packageId: item.package.id,
                     packageName: item.package.name,
                     country: item.package.country,
                     simType: item.package.simType,
                     unitPrice: item.unitPrice,
+                    quantity,
                   });
                   toast.success(t("search.addedToCart"));
                 }}

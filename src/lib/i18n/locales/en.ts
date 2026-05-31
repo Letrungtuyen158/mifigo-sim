@@ -83,6 +83,10 @@ const en: TranslationDict = {
     priceLabel: "Price",
     priceHint: "Drag handles to set price range. Card prices may vary by agent tier.",
     quantityAgent: "Quantity (agent)",
+    quantity: "Quantity",
+    quantityHint:
+      "Affects tier pricing (partner/agent) when applying filters; default quantity on package cards.",
+    lineTotal: "Line total",
     simAll: "eSIM & physical SIM",
     unlimited: "Unlimited",
     searchPlaceholder: "Search {total} plans — name, country, supplier…",
@@ -202,7 +206,9 @@ const en: TranslationDict = {
     emptyError: "Cart is empty. Search and add plans first.",
     infoError: "Please fill in all required contact fields.",
     success: "Order created",
-    qty: "Qty",
+    qty: "Quantity",
+    decreaseQty: "Decrease quantity",
+    increaseQty: "Increase quantity",
   },
   auth: {
     login: "Sign in",

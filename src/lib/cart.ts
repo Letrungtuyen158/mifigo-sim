@@ -37,6 +37,16 @@ export function addToCart(item: Omit<CartItem, "quantity"> & { quantity?: number
   return cart;
 }
 
+export function updateCartQuantity(packageId: string, quantity: number) {
+  const qty = Math.min(99, Math.max(1, Math.floor(quantity) || 1));
+  const cart = readCart();
+  const item = cart.find((c) => c.packageId === packageId);
+  if (!item) return cart;
+  item.quantity = qty;
+  writeCart(cart);
+  return cart;
+}
+
 export function removeFromCart(packageId: string) {
   const cart = readCart().filter((c) => c.packageId !== packageId);
   writeCart(cart);

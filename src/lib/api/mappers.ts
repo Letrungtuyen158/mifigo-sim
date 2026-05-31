@@ -79,6 +79,7 @@ export function mapOrderStatusFromApi(status?: string): OrderStatus {
       return "payment_review";
     case "pending_payment":
     case "paid":
+    case "processing":
     case "completed":
     case "cancelled":
       return status;

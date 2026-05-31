@@ -83,6 +83,10 @@ const vi: TranslationDict = {
     priceLabel: "Giá tiền",
     priceHint: "Kéo hai nút để chọn khoảng giá. Giá trên thẻ có thể theo cấp CTV/Đại lý.",
     quantityAgent: "Số lượng (đại lý)",
+    quantity: "Số lượng",
+    quantityHint:
+      "Dùng xem giá theo bậc (CTV/đại lý) khi áp dụng bộ lọc; mặc định cho thẻ gói bên phải.",
+    lineTotal: "Thành tiền",
     simAll: "eSIM & SIM vật lý",
     unlimited: "Không giới hạn",
     searchPlaceholder: "Tìm trong {total} gói — tên, quốc gia, nhà cung cấp…",
@@ -202,7 +206,9 @@ const vi: TranslationDict = {
     emptyError: "Giỏ trống. Hãy tra cứu và thêm gói cước trước.",
     infoError: "Vui lòng điền đầy đủ thông tin liên hệ.",
     success: "Đã tạo đơn hàng",
-    qty: "SL",
+    qty: "Số lượng",
+    decreaseQty: "Giảm số lượng",
+    increaseQty: "Tăng số lượng",
   },
   auth: {
     login: "Đăng nhập",

@@ -8,6 +8,7 @@ export type OrderStatus =
   | "pending_payment"
   | "payment_review"
   | "paid"
+  | "processing"
   | "completed"
   | "cancelled";
 

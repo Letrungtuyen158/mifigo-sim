@@ -83,6 +83,9 @@ const zh: TranslationDict = {
     priceLabel: "价格",
     priceHint: "拖动滑块选择价格区间。卡片价格可能因代理等级而异。",
     quantityAgent: "数量（代理）",
+    quantity: "数量",
+    quantityHint: "应用筛选时影响代理阶梯价显示，并作为右侧套餐卡的默认数量。",
+    lineTotal: "小计",
     simAll: "eSIM 和实体 SIM",
     unlimited: "不限流量",
     searchPlaceholder: "在 {total} 个套餐中搜索 — 名称、国家、供应商…",
@@ -203,6 +206,8 @@ const zh: TranslationDict = {
     infoError: "请填写所有必填联系信息。",
     success: "订单已创建",
     qty: "数量",
+    decreaseQty: "减少数量",
+    increaseQty: "增加数量",
   },
   auth: {
     login: "登录",

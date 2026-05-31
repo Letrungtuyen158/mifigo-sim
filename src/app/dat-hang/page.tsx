@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { cartTotal, clearCart, readCart, removeFromCart, type CartItem } from "@/lib/cart";
+import {
+  cartTotal,
+  clearCart,
+  readCart,
+  removeFromCart,
+  updateCartQuantity,
+  type CartItem,
+} from "@/lib/cart";
+import QuantityStepper from "@/components/ui/QuantityStepper";
 import { tSimType } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
 
@@ -26,6 +34,10 @@ export default function DatHangPage() {
   function handleRemove(packageId: string) {
     setCart(removeFromCart(packageId));
     toast.success(t("cart.removed"));
+  }
+
+  function handleQuantityChange(packageId: string, quantity: number) {
+    setCart(updateCartQuantity(packageId, quantity));
   }
 
   async function handleSubmit() {
@@ -86,17 +98,28 @@ export default function DatHangPage() {
               {cart.map((item) => (
                 <div
                   key={item.packageId}
-                  className="flex gap-3 rounded-xl border border-slate-200 p-3 text-sm"
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 text-sm sm:flex-row sm:items-center"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold">{item.packageName}</div>
                     <div className="mt-1 text-slate-600">
-                      {item.country} · {tSimType(locale, item.simType)} · {t("cart.qty")}:{" "}
-                      {item.quantity}
+                      {item.country} · {tSimType(locale, item.simType)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {formatVnd(item.unitPrice)} / SIM
                     </div>
                     <div className="mt-1 font-bold text-[#1d6be8]">
                       {formatVnd(item.unitPrice * item.quantity)}
                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                    <div className="text-xs font-bold text-slate-600">{t("cart.qty")}</div>
+                    <QuantityStepper
+                      compact
+                      value={item.quantity}
+                      ariaLabel={t("cart.qty")}
+                      onChange={(qty) => handleQuantityChange(item.packageId, qty)}
+                    />
                   </div>
                   <button
                     type="button"

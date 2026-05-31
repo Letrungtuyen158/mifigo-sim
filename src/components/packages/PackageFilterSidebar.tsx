@@ -233,6 +233,28 @@ export default function PackageFilterSidebar({
         </select>
       </div>
 
+      <div>
+        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+          {t("search.quantity")}
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={99}
+          value={values.quantity}
+          onChange={(e) =>
+            setValues((v) => ({
+              ...v,
+              quantity: String(Math.min(99, Math.max(1, Number(e.target.value) || 1))),
+            }))
+          }
+          className={selectClass}
+        />
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          {t("search.quantityHint")}
+        </p>
+      </div>
+
       {priceBounds.max > 0 ? (
         <div>
           <label className="mb-1.5 block text-sm font-bold text-slate-800">
