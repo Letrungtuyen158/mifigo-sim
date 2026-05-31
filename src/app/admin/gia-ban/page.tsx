@@ -9,7 +9,14 @@ import {
   fetchPackageSelectOptions,
   type SelectOption,
 } from "@/lib/admin-selects";
-import { docId, inputClass, adminPageHeaderClass, adminTableWrapClass } from "@/lib/admin-utils";
+import {
+  docId,
+  inputClass,
+  refId,
+  refName,
+  adminPageHeaderClass,
+  adminTableWrapClass,
+} from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 import { formatVnd } from "@/lib/format";
 
@@ -18,6 +25,7 @@ const CHANNELS = ["anonymous", "retail", "agent", "collaborator", "vip"] as cons
 type SaleRuleRow = {
   id: string;
   packageId: string;
+  packageName?: string;
   channel: string;
   salePrice: number;
   isActive: boolean;
@@ -69,11 +77,12 @@ export default function AdminSalePriceRulesPage() {
       setRules(
         data.items.map((r) => ({
           id: docId(r),
-          packageId: String(r.packageId || ""),
+          packageId: refId(r.packageId),
+          packageName: refName(r.packageId) || undefined,
           channel: String(r.channel || ""),
           salePrice: firstTierPrice(r),
           isActive: r.isActive !== false,
-          customerGroupId: r.customerGroupId ? String(r.customerGroupId) : undefined,
+          customerGroupId: r.customerGroupId ? refId(r.customerGroupId) : undefined,
         }))
       );
       setMeta({
@@ -94,8 +103,11 @@ export default function AdminSalePriceRulesPage() {
     void load(page);
   }, [page, load]);
 
-  function packageLabel(id: string) {
-    return packageOptions.find((p) => p.id === id)?.label || id.slice(-6);
+  function packageLabel(row: SaleRuleRow) {
+    if (row.packageName) return row.packageName;
+    const fromList = packageOptions.find((p) => p.id === row.packageId)?.label;
+    if (fromList) return fromList;
+    return row.packageId ? row.packageId.slice(-8) : "—";
   }
 
   async function createSaleRule(e: React.FormEvent) {
@@ -126,7 +138,8 @@ export default function AdminSalePriceRulesPage() {
       salePrice: 0,
       isActive: true,
     });
-    void load(page);
+    void load(1);
+    setPage(1);
   }
 
   return (
@@ -142,52 +155,12 @@ export default function AdminSalePriceRulesPage() {
         </div>
       </div>
 
-      <div className={`card ${adminTableWrapClass} p-4`}>
-        {loading ? (
-          <p className="text-sm text-slate-500">Đang tải…</p>
-        ) : (
-          <table className="min-w-[760px] w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
-              <tr>
-                <th className="px-3 py-2">Gói</th>
-                <th className="px-3 py-2">Kênh</th>
-                <th className="px-3 py-2">Giá (tier 1)</th>
-                <th className="px-3 py-2">Active</th>
-                <th className="px-3 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((row) => (
-                <tr key={row.id} className="border-t">
-                  <td className="px-3 py-2 font-medium">{packageLabel(row.packageId)}</td>
-                  <td className="px-3 py-2">{row.channel}</td>
-                  <td className="px-3 py-2 font-semibold text-[#1d6be8]">{formatVnd(row.salePrice)}</td>
-                  <td className="px-3 py-2">{row.isActive ? "✓" : "—"}</td>
-                  <td className="px-3 py-2 text-right">
-                    <Link
-                      href={`/admin/gia-ban/${row.packageId}`}
-                      className="text-sm font-semibold text-[#1d6be8] hover:underline"
-                    >
-                      Chỉnh bậc giá →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <AdminPagination
-          page={meta.page}
-          limit={meta.limit}
-          total={meta.total}
-          totalPages={meta.totalPages}
-          onPageChange={setPage}
-        />
-      </div>
-
-      <form onSubmit={(e) => void createSaleRule(e)} className="card max-w-lg space-y-3 p-4">
-        <h2 className="font-bold">Tạo sale-price-rule</h2>
-        <label className="block text-sm">
+      <form
+        onSubmit={(e) => void createSaleRule(e)}
+        className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
+      >
+        <h2 className="font-bold sm:col-span-2 lg:col-span-6">Tạo sale-price-rule</h2>
+        <label className="block text-sm lg:col-span-2">
           <span className="mb-1 block font-semibold">Gói cước</span>
           <select
             className={inputClass}
@@ -220,7 +193,7 @@ export default function AdminSalePriceRulesPage() {
           </select>
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-semibold">Nhóm khách (tuỳ chọn)</span>
+          <span className="mb-1 block font-semibold">Nhóm khách</span>
           <select
             className={inputClass}
             value={newRule.customerGroupId}
@@ -234,26 +207,84 @@ export default function AdminSalePriceRulesPage() {
             ))}
           </select>
         </label>
-        <input
-          className={inputClass}
-          type="number"
-          min={1}
-          placeholder="Giá bán (VND)"
-          value={newRule.salePrice || ""}
-          onChange={(e) => setNewRule({ ...newRule, salePrice: Number(e.target.value) })}
-        />
-        <label className="flex items-center gap-2 text-sm">
+        <label className="block text-sm">
+          <span className="mb-1 block font-semibold">Giá bán (VND)</span>
           <input
-            type="checkbox"
-            checked={newRule.isActive}
-            onChange={(e) => setNewRule({ ...newRule, isActive: e.target.checked })}
+            className={inputClass}
+            type="number"
+            min={1}
+            placeholder="150000"
+            value={newRule.salePrice || ""}
+            onChange={(e) => setNewRule({ ...newRule, salePrice: Number(e.target.value) })}
           />
-          Đang kích hoạt
         </label>
-        <button type="submit" className="btn-primary">
-          Tạo rule
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:flex-col lg:items-stretch">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={newRule.isActive}
+              onChange={(e) => setNewRule({ ...newRule, isActive: e.target.checked })}
+            />
+            Kích hoạt
+          </label>
+          <button type="submit" className="btn-primary w-full sm:w-auto">
+            Tạo rule
+          </button>
+        </div>
       </form>
+
+      <div className={`card ${adminTableWrapClass} p-4`}>
+        {loading ? (
+          <p className="text-sm text-slate-500">Đang tải…</p>
+        ) : (
+          <table className="min-w-[760px] w-full text-sm">
+            <thead className="bg-slate-50 text-left text-slate-500">
+              <tr>
+                <th className="px-3 py-2">Gói</th>
+                <th className="px-3 py-2">Kênh</th>
+                <th className="px-3 py-2">Giá (tier 1)</th>
+                <th className="px-3 py-2">Active</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {rules.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
+                    Chưa có quy tắc giá — tạo rule phía trên.
+                  </td>
+                </tr>
+              ) : (
+                rules.map((row) => (
+                  <tr key={row.id} className="border-t">
+                    <td className="px-3 py-2 font-medium">{packageLabel(row)}</td>
+                    <td className="px-3 py-2">{row.channel}</td>
+                    <td className="px-3 py-2 font-semibold text-[#1d6be8]">
+                      {formatVnd(row.salePrice)}
+                    </td>
+                    <td className="px-3 py-2">{row.isActive ? "✓" : "—"}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Link
+                        href={`/admin/gia-ban/${row.packageId}`}
+                        className="text-sm font-semibold text-[#1d6be8] hover:underline"
+                      >
+                        Chỉnh bậc giá →
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }
