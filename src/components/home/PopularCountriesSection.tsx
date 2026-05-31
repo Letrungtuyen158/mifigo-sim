@@ -37,7 +37,7 @@ export default function PopularCountriesSection() {
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`rounded-full border px-4 py-2 text-sm font-extrabold transition ${
+            className={`chip border px-4 py-2 font-extrabold ${
               tab === item.id
                 ? "border-[#1d6be8] bg-[#1d6be8] text-white shadow-sm"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"

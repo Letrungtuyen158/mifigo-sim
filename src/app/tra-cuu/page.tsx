@@ -177,7 +177,7 @@ function TraCuuContent() {
                 placeholder={t("search.searchPlaceholder", {
                   total: pagination.total,
                 })}
-                className="w-full rounded-xl border border-slate-200 py-3 pl-4 pr-4 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
+                className="input-field py-3 pl-4 pr-4"
               />
             </div>
             <button type="submit" className="btn-primary shrink-0 px-6">

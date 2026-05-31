@@ -85,7 +85,7 @@ export default function DestinationPills() {
               key={pill.id}
               type="button"
               onClick={() => selectPill(pill)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+              className={`chip shrink-0 gap-1.5 border px-4 py-2 ${
                 active
                   ? "border-[#1d6be8] bg-blue-50 text-[#1d6be8]"
                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"

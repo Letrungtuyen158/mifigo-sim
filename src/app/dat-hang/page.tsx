@@ -98,7 +98,7 @@ export default function DatHangPage() {
               {cart.map((item) => (
                 <div
                   key={item.packageId}
-                  className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 text-sm sm:flex-row sm:items-center"
+                  className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 text-sm sm:flex-row sm:items-center"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold">{item.packageName}</div>
@@ -139,25 +139,25 @@ export default function DatHangPage() {
           <h2 className="font-bold">{t("cart.orderInfo")}</h2>
           <div className="mt-4 space-y-3">
             <input
-              className="w-full rounded-xl border px-3 py-2.5 text-sm"
+              className="input-field"
               placeholder={t("cart.name")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
             <input
-              className="w-full rounded-xl border px-3 py-2.5 text-sm"
+              className="input-field"
               placeholder={t("cart.phone")}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <input
-              className="w-full rounded-xl border px-3 py-2.5 text-sm"
+              className="input-field"
               placeholder={t("cart.email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
             <textarea
-              className="w-full rounded-xl border px-3 py-2.5 text-sm"
+              className="input-field"
               placeholder={t("cart.note")}
               rows={3}
               value={note}

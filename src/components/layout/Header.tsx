@@ -44,7 +44,7 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+                className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
                   active
                     ? "bg-[#1d6be8]/10 text-[#1d6be8]"
                     : "text-slate-600 hover:bg-slate-100"
@@ -61,19 +61,19 @@ export default function Header() {
           <CartLink />
           <Link
             href="/tra-cuu?simType=esim"
-            className="inline-flex h-10 items-center rounded-full bg-[#1d6be8] px-5 text-sm font-extrabold text-white shadow-md shadow-[#1d6be8]/30 transition hover:bg-[#1558c0]"
+            className="btn-primary h-10 px-5"
           >
             {t("common.buyEsim")}
           </Link>
           {role === "admin" && (
-            <Link href="/admin" className="rounded-full border px-4 py-2 text-sm font-semibold">
+            <Link href="/admin" className="rounded-md border px-4 py-2 text-sm font-semibold">
               {t("common.admin")}
             </Link>
           )}
           {role !== "guest" && role !== "admin" && (
             <Link
               href="/don-hang-cua-toi"
-              className="rounded-full border px-4 py-2 text-sm font-semibold"
+              className="rounded-md border px-4 py-2 text-sm font-semibold"
             >
               {t("auth.myOrders")}
             </Link>
@@ -81,14 +81,14 @@ export default function Header() {
           {role === "guest" ? (
             <Link
               href="/dang-nhap"
-              className="inline-flex h-10 items-center rounded-full bg-[#f97316] px-5 text-sm font-extrabold text-white shadow-md shadow-[#f97316]/30 transition hover:bg-[#ea580c]"
+              className="btn-accent h-10 px-5"
             >
               {t("common.login")}
             </Link>
           ) : (
             <button
               type="button"
-              className="rounded-full border px-4 py-2 text-sm font-semibold"
+              className="rounded-md border px-4 py-2 text-sm font-semibold"
               onClick={() => {
                 void fetch("/api/auth/logout", { method: "POST" }).then(() =>
                   window.location.reload()

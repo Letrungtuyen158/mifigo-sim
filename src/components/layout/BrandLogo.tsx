@@ -29,7 +29,7 @@ export default function BrandLogo({
         alt=""
         width={size}
         height={size}
-        className="shrink-0 rounded-xl object-contain"
+        className="shrink-0 rounded-md object-contain"
         style={{ width: size, height: size, maxWidth: size, maxHeight: size }}
         priority
         unoptimized={remote}

@@ -21,7 +21,7 @@ export default function PasswordInput({
     <div className={`relative ${className}`}>
       <input
         type={visible ? "text" : "password"}
-        className="w-full rounded-xl border px-3 py-2.5 pr-11 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
+        className="input-field pr-11"
         placeholder={placeholder}
         autoComplete={autoComplete}
         value={value}

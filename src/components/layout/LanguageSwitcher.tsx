@@ -26,7 +26,7 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        className="inline-flex h-10 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         aria-label={t("common.language")}
         aria-expanded={open}
       >
@@ -47,7 +47,7 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
           {locales.map((item) => (
             <button
               key={item.code}

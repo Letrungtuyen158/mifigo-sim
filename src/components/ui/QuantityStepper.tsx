@@ -26,11 +26,11 @@ export default function QuantityStepper({
 
   const btnClass = compact
     ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
-    : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40";
+    : "flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40";
 
   const inputClass = compact
     ? "h-9 w-12 rounded-lg border border-slate-200 text-center text-sm font-bold text-slate-900 outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-    : "h-10 w-14 rounded-xl border border-slate-200 text-center text-sm font-bold text-slate-900 outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20";
+    : "h-10 w-14 rounded-md border border-slate-200 text-center text-sm font-bold text-slate-900 outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20";
 
   return (
     <div

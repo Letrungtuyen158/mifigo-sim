@@ -31,14 +31,14 @@ export default function OrderStepsSection() {
       <div className="container-page">
         <h2 className="text-2xl font-black text-slate-900">{t("home.orderStepsTitle")}</h2>
 
-        <div className="mt-4 inline-flex rounded-full bg-slate-100 p-1">
+        <div className="mt-4 inline-flex gap-1 rounded-md border border-slate-200 bg-slate-50 p-1">
           <button
             type="button"
             onClick={() => setTab("esim")}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+            className={`chip px-5 py-2 font-bold ${
               tab === "esim"
                 ? "bg-[#1d6be8] text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                : "bg-transparent text-slate-600 hover:bg-white"
             }`}
           >
             eSIM
@@ -46,10 +46,10 @@ export default function OrderStepsSection() {
           <button
             type="button"
             onClick={() => setTab("physical")}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+            className={`chip px-5 py-2 font-bold ${
               tab === "physical"
                 ? "bg-[#1d6be8] text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                : "bg-transparent text-slate-600 hover:bg-white"
             }`}
           >
             SIM

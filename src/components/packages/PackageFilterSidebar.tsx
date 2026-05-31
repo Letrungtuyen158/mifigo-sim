@@ -135,7 +135,7 @@ export default function PackageFilterSidebar({
   }
 
   const selectClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20";
+    "input-field";
 
   return (
     <form
@@ -277,14 +277,14 @@ export default function PackageFilterSidebar({
       <div className="space-y-2 pt-1">
         <button
           type="submit"
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+          className="w-full rounded-md bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
         >
           {t("common.apply")}
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+          className="w-full rounded-md border border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
         >
           {t("common.reset")}
         </button>

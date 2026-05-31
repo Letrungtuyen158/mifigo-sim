@@ -31,7 +31,7 @@ export default function CartLink({ className = "" }: { className?: string }) {
       href="/dat-hang"
       aria-label={t("common.cart")}
       aria-current={active ? "page" : undefined}
-      className={`relative flex h-10 w-10 items-center justify-center rounded-xl border bg-white text-slate-800 shadow-sm transition hover:bg-slate-50 ${
+      className={`relative flex h-10 w-10 items-center justify-center rounded-md border bg-white text-slate-800 shadow-sm transition hover:bg-slate-50 ${
         active
           ? "border-[#1d6be8]/40 bg-[#1d6be8]/10 text-[#1d6be8]"
           : "border-slate-200"

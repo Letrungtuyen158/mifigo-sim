@@ -60,7 +60,7 @@ export default function PackageSearchForm({
           <select
             value={values.country}
             onChange={(e) => setValues((v) => ({ ...v, country: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           >
             <option value="">Tất cả quốc gia</option>
             {COUNTRIES.map((c) => (
@@ -80,7 +80,7 @@ export default function PackageSearchForm({
             onChange={(e) =>
               setValues((v) => ({ ...v, packageType: e.target.value }))
             }
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           >
             <option value="">Tất cả loại</option>
             {PACKAGE_TYPES.map((p) => (
@@ -98,7 +98,7 @@ export default function PackageSearchForm({
           <select
             value={values.dataGb}
             onChange={(e) => setValues((v) => ({ ...v, dataGb: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           >
             <option value="">Tất cả</option>
             <option value="unlimited">Không giới hạn</option>
@@ -117,7 +117,7 @@ export default function PackageSearchForm({
           <select
             value={values.days}
             onChange={(e) => setValues((v) => ({ ...v, days: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           >
             <option value="">Tất cả</option>
             {DAY_OPTIONS.map((d) => (
@@ -135,7 +135,7 @@ export default function PackageSearchForm({
           <select
             value={values.simType}
             onChange={(e) => setValues((v) => ({ ...v, simType: e.target.value }))}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           >
             <option value="">eSIM & SIM vật lý</option>
             <option value="esim">eSIM</option>
@@ -156,7 +156,7 @@ export default function PackageSearchForm({
             onChange={(e) =>
               setValues((v) => ({ ...v, quantity: e.target.value }))
             }
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className="input-field"
           />
         </div>
       )}
