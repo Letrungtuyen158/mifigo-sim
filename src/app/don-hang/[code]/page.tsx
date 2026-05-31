@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import OrderStatusBadge from "@/components/admin/OrderStatusBadge";
+import ImageFilePicker from "@/components/ui/ImageFilePicker";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { tOrderStatus, tSimType } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
@@ -163,16 +164,15 @@ export default function DonHangPage() {
           <h2 className="font-bold">{t("order.confirmPayment")}</h2>
           <p className="mt-1 text-sm text-slate-600">{t("order.proofHint")}</p>
 
-          <label className="mt-4 block text-sm font-semibold">
-            {t("order.proofImage")} *
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="mt-1 w-full text-sm"
-              disabled={submitting}
-              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
+          <ImageFilePicker
+            file={proofFile}
+            disabled={submitting}
+            label={`${t("order.proofImage")} *`}
+            hint={t("order.proofHint")}
+            buttonLabel={t("order.uploadProofButton")}
+            removeLabel={t("order.removeProofImage")}
+            onChange={setProofFile}
+          />
 
           <label className="mt-3 block text-sm font-semibold">
             {t("order.transactionNote")}
