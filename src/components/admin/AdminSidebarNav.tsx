@@ -16,7 +16,6 @@ const NAV = [
   { href: "/admin/so-sanh", label: "So sánh NCC" },
   { href: "/admin/kho-sim", label: "Kho SIM" },
   { href: "/admin/import", label: "Import" },
-  { href: "/admin/esim-vn", label: "eSIM VN" },
   { href: "/admin/nhat-ky", label: "Nhật ký" },
   { href: "/admin/cai-dat", label: "Cài đặt hệ thống" },
 ] as const;

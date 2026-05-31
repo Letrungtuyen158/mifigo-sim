@@ -81,7 +81,7 @@ export default async function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-black">Tổng quan</h1>
         <p className="text-sm text-slate-600">
-          Quản lý giá nhập NCC, giá bán kênh, đơn hàng và eSIM VN.
+          Quản lý giá nhập NCC, giá bán kênh, đơn hàng và kho SIM/eSIM.
         </p>
       </div>
 
