@@ -151,7 +151,7 @@ function TraCuuContent() {
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <aside className="w-full shrink-0 lg:w-72">
+        <aside className="w-full min-w-0 shrink-0 lg:w-72">
           <PackageFilterSidebar
             initial={sidebarInitial}
             priceBounds={priceBounds}

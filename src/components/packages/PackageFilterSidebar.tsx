@@ -37,44 +37,47 @@ function PriceRangeSlider({
   const range = safeMax - safeMin || 1;
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <p className="text-xs leading-relaxed text-slate-500">{hint}</p>
-      <div className="relative h-6">
-        <div className="absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-slate-200" />
-        <div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[#1d6be8]/40"
-          style={{
-            left: `${((valueMin - safeMin) / range) * 100}%`,
-            right: `${100 - ((valueMax - safeMin) / range) * 100}%`,
-          }}
-        />
-        <input
-          type="range"
-          min={safeMin}
-          max={safeMax}
-          value={valueMin}
-          onChange={(e) =>
-            onChange(Math.min(Number(e.target.value), valueMax), valueMax)
-          }
-          className="range-thumb absolute inset-0 z-20 w-full cursor-pointer appearance-none bg-transparent"
-        />
-        <input
-          type="range"
-          min={safeMin}
-          max={safeMax}
-          value={valueMax}
-          onChange={(e) =>
-            onChange(valueMin, Math.max(Number(e.target.value), valueMin))
-          }
-          className="range-thumb absolute inset-0 z-30 w-full cursor-pointer appearance-none bg-transparent"
-        />
+      {/* px-2.5 = half thumb width — keeps 18px handles inside the card */}
+      <div className="px-2.5">
+        <div className="relative h-8">
+          <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200" />
+          <div
+            className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[#1d6be8]/40"
+            style={{
+              left: `${((valueMin - safeMin) / range) * 100}%`,
+              right: `${100 - ((valueMax - safeMin) / range) * 100}%`,
+            }}
+          />
+          <input
+            type="range"
+            min={safeMin}
+            max={safeMax}
+            value={valueMin}
+            onChange={(e) =>
+              onChange(Math.min(Number(e.target.value), valueMax), valueMax)
+            }
+            className="range-thumb pointer-events-none absolute inset-0 z-20 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+          />
+          <input
+            type="range"
+            min={safeMin}
+            max={safeMax}
+            value={valueMax}
+            onChange={(e) =>
+              onChange(valueMin, Math.max(Number(e.target.value), valueMin))
+            }
+            className="range-thumb pointer-events-none absolute inset-0 z-30 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+          />
+        </div>
       </div>
-      <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-        <span>{formatVnd(valueMin)}</span>
-        <span className="font-medium text-[#1d6be8]">
-          {formatVnd(valueMin)} — {formatVnd(valueMax)}
-        </span>
-        <span>{formatVnd(valueMax)}</span>
+      <p className="text-center text-xs font-medium text-[#1d6be8]">
+        {formatVnd(valueMin)} — {formatVnd(valueMax)}
+      </p>
+      <div className="flex justify-between gap-2 text-[11px] font-bold text-slate-600">
+        <span className="shrink-0">{formatVnd(safeMin)}</span>
+        <span className="shrink-0">{formatVnd(safeMax)}</span>
       </div>
     </div>
   );
@@ -135,7 +138,10 @@ export default function PackageFilterSidebar({
     "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20";
 
   return (
-    <form onSubmit={handleSubmit} className="card sticky top-24 space-y-5 p-5">
+    <form
+      onSubmit={handleSubmit}
+      className="card sticky top-24 min-w-0 space-y-5 overflow-hidden p-5"
+    >
       <h2 className="text-lg font-black text-slate-900">{t("search.filters")}</h2>
 
       <div>
