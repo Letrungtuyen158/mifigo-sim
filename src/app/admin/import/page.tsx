@@ -30,7 +30,6 @@ const BATCH_STATUS_LABEL: Record<string, string> = {
   failed: "Thất bại",
 };
 
-/** Cột Excel theo BE README — POST /admin/import/supplier-prices */
 const SUPPLIER_PRICE_COLUMNS = [
   "package_slug hoặc package_id",
   "cost_price",
@@ -52,6 +51,7 @@ export default function AdminImportPage() {
   const [suppliersLoading, setSuppliersLoading] = useState(true);
   const [supplierId, setSupplierId] = useState("");
   const [packageId, setPackageId] = useState("");
+  const [excelFile, setExcelFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
 
   const loadBatches = useCallback(async (p: number) => {
@@ -82,7 +82,11 @@ export default function AdminImportPage() {
       .finally(() => setSuppliersLoading(false));
   }, []);
 
-  async function importPrices(file: File) {
+  async function runImport() {
+    if (!excelFile) {
+      toast.error("Vui lòng chọn file Excel.");
+      return;
+    }
     if (!supplierId) {
       toast.error("Vui lòng chọn nhà cung cấp.");
       return;
@@ -91,7 +95,7 @@ export default function AdminImportPage() {
     setImporting(true);
     try {
       const fd = new FormData();
-      fd.set("file", file);
+      fd.set("file", excelFile);
       fd.set("supplierId", supplierId);
       if (packageId.trim()) fd.set("packageId", packageId.trim());
 
@@ -118,6 +122,7 @@ export default function AdminImportPage() {
         toast.success(`Import xong: ${ok} dòng OK`);
       }
 
+      setExcelFile(null);
       setPage(1);
       void loadBatches(1);
     } catch {
@@ -127,16 +132,14 @@ export default function AdminImportPage() {
     }
   }
 
-  const canImport = Boolean(supplierId) && !suppliersLoading;
+  const canImport = Boolean(supplierId) && !suppliersLoading && !importing;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black">Import dữ liệu</h1>
         <p className="mt-1 text-sm text-slate-600">
-          API: <code className="text-xs">POST /admin/import/supplier-prices</code> — multipart{" "}
-          <code className="text-xs">file</code>, <code className="text-xs">supplierId</code>,{" "}
-          <code className="text-xs">packageId</code> (tùy chọn).
+          Import bảng giá nhà cung cấp từ file Excel (.xlsx, .xls).
         </p>
       </div>
 
@@ -175,7 +178,7 @@ export default function AdminImportPage() {
         <label className="block text-sm">
           <span className="mb-1 block font-semibold text-slate-700">
             packageId mặc định
-            <span className="ml-1 font-normal text-slate-500">(tùy chọn — MongoDB ObjectId)</span>
+            <span className="ml-1 font-normal text-slate-500">(tùy chọn)</span>
           </span>
           <input
             className={inputClass}
@@ -184,18 +187,26 @@ export default function AdminImportPage() {
             disabled={importing}
             onChange={(e) => setPackageId(e.target.value)}
           />
-          <p className="mt-1 text-xs text-slate-500">
-            Dùng khi file Excel không có cột package_slug / package_id.
-          </p>
         </label>
 
         <ExcelFilePicker
-          disabled={!canImport}
-          loading={importing}
-          label="Import file Excel"
-          hint="Kéo thả hoặc bấm để chọn file .xlsx / .xls"
-          onFileSelect={importPrices}
+          file={excelFile}
+          disabled={importing || suppliersLoading || (!supplierId && !excelFile)}
+          onChange={setExcelFile}
+          label="File Excel *"
+          buttonLabel="Chọn file Excel"
+          hint="Kéo thả hoặc bấm để chọn (.xlsx, .xls)"
+          removeLabel="Xóa file"
         />
+
+        <button
+          type="button"
+          className="btn-primary w-full sm:w-auto"
+          disabled={!canImport || !excelFile}
+          onClick={() => void runImport()}
+        >
+          {importing ? "Đang import…" : "Import Excel"}
+        </button>
       </div>
 
       <div className={`card ${adminTableWrapClass} p-4`}>

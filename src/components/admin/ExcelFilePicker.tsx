@@ -44,91 +44,124 @@ function FileSpreadsheetIcon({ className = "h-5 w-5" }: { className?: string }) 
 }
 
 export default function ExcelFilePicker({
-  accept = ".xlsx,.xls",
+  accept = ".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel",
   disabled = false,
-  loading = false,
+  file,
+  onChange,
   label = "Chọn file Excel",
-  hint = "Kéo thả hoặc bấm để chọn (.xlsx, .xls)",
-  onFileSelect,
+  hint = "Kéo thả hoặc bấm để chọn file .xlsx / .xls",
+  buttonLabel = "Chọn file Excel",
+  removeLabel = "Xóa file",
+  id = "excel-file-picker",
 }: {
   accept?: string;
   disabled?: boolean;
-  loading?: boolean;
+  file: File | null;
+  onChange: (file: File | null) => void;
   label?: string;
   hint?: string;
-  onFileSelect: (file: File) => void | Promise<void>;
+  buttonLabel?: string;
+  removeLabel?: string;
+  id?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
 
-  async function handleFile(file: File | undefined) {
-    if (!file || disabled || loading) return;
-    setFileName(file.name);
-    await onFileSelect(file);
+  function pickFile(selected: File | undefined) {
+    if (!selected || disabled) return;
+    onChange(selected);
+  }
+
+  function clearFile() {
+    onChange(null);
     if (inputRef.current) inputRef.current.value = "";
-    setFileName(null);
   }
 
   return (
     <div>
+      {label ? (
+        <span id={`${id}-label`} className="mb-2 block text-sm font-semibold text-slate-700">
+          {label}
+        </span>
+      ) : null}
       <input
         ref={inputRef}
+        id={id}
         type="file"
         accept={accept}
         className="sr-only"
-        disabled={disabled || loading}
-        onChange={(e) => void handleFile(e.target.files?.[0])}
+        disabled={disabled}
+        aria-labelledby={label ? `${id}-label` : undefined}
+        onChange={(e) => pickFile(e.target.files?.[0])}
       />
-      <button
-        type="button"
-        disabled={disabled || loading}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!disabled && !loading) setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          if (disabled || loading) return;
-          void handleFile(e.dataTransfer.files?.[0]);
-        }}
-        className={`group flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${
-          disabled || loading
-            ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
-            : dragOver
-              ? "border-[#1d6be8] bg-blue-50"
-              : "border-slate-200 bg-slate-50/80 hover:border-[#1d6be8] hover:bg-blue-50/60"
-        }`}
-      >
-        <div
-          className={`flex h-14 w-14 items-center justify-center rounded-full transition ${
-            dragOver
-              ? "bg-[#1d6be8] text-white"
-              : "bg-white text-[#1d6be8] shadow-sm ring-1 ring-slate-200 group-hover:bg-[#1d6be8] group-hover:text-white"
+
+      {!file ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (!disabled) setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            if (disabled) return;
+            pickFile(e.dataTransfer.files?.[0]);
+          }}
+          className={`group flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${
+            disabled
+              ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
+              : dragOver
+                ? "border-[#1d6be8] bg-blue-50"
+                : "border-slate-200 bg-slate-50/80 hover:border-[#1d6be8] hover:bg-blue-50/60"
           }`}
         >
-          {loading ? (
-            <span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : (
+          <div
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition ${
+              dragOver
+                ? "bg-[#1d6be8] text-white"
+                : "bg-white text-[#1d6be8] shadow-sm ring-1 ring-slate-200 group-hover:bg-[#1d6be8] group-hover:text-white"
+            }`}
+          >
             <UploadIcon />
-          )}
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-800">
-            {loading ? "Đang import…" : label}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[#1d6be8]">{buttonLabel}</p>
+            <p className="mt-1 text-xs text-slate-500">{hint}</p>
+          </div>
+        </button>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
+            <FileSpreadsheetIcon className="h-5 w-5 shrink-0" />
+            <span className="truncate">{file.name}</span>
           </p>
-          <p className="mt-1 text-xs text-slate-500">{hint}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {(file.size / 1024).toFixed(0)} KB
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded-lg bg-[#1d6be8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1558c0]"
+              disabled={disabled}
+              onClick={() => inputRef.current?.click()}
+            >
+              {buttonLabel}
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              disabled={disabled}
+              onClick={clearFile}
+            >
+              {removeLabel}
+            </button>
+          </div>
         </div>
-        {fileName && !loading ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-            <FileSpreadsheetIcon className="h-4 w-4" />
-            {fileName}
-          </span>
-        ) : null}
-      </button>
+      )}
     </div>
   );
 }
