@@ -1,3 +1,4 @@
+import { mongoIdString } from "../admin-utils";
 import { COUNTRIES } from "../constants";
 import type {
   ChannelPricing,
@@ -18,12 +19,7 @@ import type {
 type MongoDoc = Record<string, unknown> & { _id?: string | { toString(): string } };
 
 function idOf(doc: MongoDoc | string | null | undefined): string {
-  if (!doc) return "";
-  if (typeof doc === "string") return doc;
-  if (doc._id) {
-    return typeof doc._id === "string" ? doc._id : doc._id.toString();
-  }
-  return "";
+  return mongoIdString(doc);
 }
 
 export function mapSimTypeFromApi(value?: string): SimType {
@@ -99,21 +95,13 @@ export function mapRoleFromApi(role?: string): UserRole {
   switch (role) {
     case "customer":
     case "agent":
+    case "collaborator":
+    case "staff":
     case "admin":
       return role;
-    case "staff":
-    case "collaborator":
-      return role === "staff" ? "admin" : "agent";
     default:
       return "customer";
   }
-}
-
-export function mapRoleForDisplay(role?: string): string {
-  if (!role) return "guest";
-  if (role === "staff") return "admin";
-  if (role === "collaborator") return "agent";
-  return role;
 }
 
 export function countryNameToCode(name?: string): string | undefined {

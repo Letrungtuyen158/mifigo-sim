@@ -4,7 +4,7 @@ import { apiRequest, toNextError } from "@/lib/api/client";
 import {
   countryNameToCode,
   mapPackageTypeToApi,
-  mapRoleForDisplay,
+  mapRoleFromApi,
   mapSearchResultFromApi,
   mapSimTypeToApi,
   mapSortToApi,
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const token = await getAccessToken();
     const payload = token ? decodeJwtPayload(token) : null;
-    const role = mapRoleForDisplay(payload?.role);
+    const role = payload?.role ? mapRoleFromApi(payload.role) : "guest";
 
     const quantity = Number(searchParams.get("quantity") || "1") || 1;
     const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);

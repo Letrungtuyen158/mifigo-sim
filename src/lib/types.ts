@@ -1,4 +1,10 @@
-export type UserRole = "guest" | "customer" | "agent" | "admin";
+export type UserRole =
+  | "guest"
+  | "customer"
+  | "agent"
+  | "collaborator"
+  | "staff"
+  | "admin";
 
 export type SimType = "esim" | "physical";
 

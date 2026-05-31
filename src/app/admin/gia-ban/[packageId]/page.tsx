@@ -9,13 +9,13 @@ import {
   saveChannelPricing,
   type ChannelPricingRow,
 } from "@/lib/admin-pricing";
-import { adminPageHeaderClass, inputClass } from "@/lib/admin-utils";
+import { adminPageHeaderClass, isMongoId, mongoIdString } from "@/lib/admin-utils";
 import { formatVnd } from "@/lib/format";
 import type { ChannelPricing } from "@/lib/types";
 
 export default function AdminChannelPricingDetailPage() {
   const params = useParams<{ packageId: string }>();
-  const packageId = params.packageId;
+  const packageId = mongoIdString(params.packageId);
   const [pricing, setPricing] = useState<ChannelPricingRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,6 +52,18 @@ export default function AdminChannelPricingDetailPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (!packageId || !isMongoId(packageId)) {
+    return (
+      <div className="card p-6 text-sm text-red-600">
+        packageId không hợp lệ. Quay lại{" "}
+        <Link href="/admin/gia-ban" className="font-semibold text-[#1d6be8] hover:underline">
+          danh sách giá bán
+        </Link>
+        .
+      </div>
+    );
   }
 
   if (loading || !pricing) {

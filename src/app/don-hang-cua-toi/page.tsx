@@ -6,18 +6,35 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { tOrderStatus } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
 import type { Order } from "@/lib/types";
+import { useAuthRole } from "@/hooks/useAuthRole";
+import { canAccessAdminPanel, isCustomerRole } from "@/lib/roles";
+import { useRouter } from "next/navigation";
 
 export default function DonHangCuaToiPage() {
+  const router = useRouter();
   const { t, locale } = useTranslation();
+  const { role, loading: authLoading } = useAuthRole();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (canAccessAdminPanel(role)) {
+      router.replace("/admin");
+      return;
+    }
+    if (!isCustomerRole(role) && role !== "guest") {
+      router.replace("/tra-cuu");
+    }
+  }, [authLoading, role, router]);
+
+  useEffect(() => {
+    if (authLoading || !isCustomerRole(role)) return;
     void fetch("/api/orders")
       .then((r) => r.json())
       .then((d) => setOrders(d.data || []))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authLoading, role]);
 
   return (
     <div className="container-page py-8">

@@ -14,5 +14,5 @@ export async function PUT(
 ) {
   const { id } = await ctx.params;
   const body = await req.json();
-  return adminPut(`/admin/countries/${id}`, body);
+  return adminPut(`/admin/countries/${id}`, body, "Cập nhật thất bại", false, true);
 }

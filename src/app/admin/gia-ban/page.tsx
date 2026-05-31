@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminWriteGate from "@/components/admin/AdminWriteGate";
+import StaffReadOnlyBanner from "@/components/admin/StaffReadOnlyBanner";
 import AdminPagination from "@/components/admin/AdminPagination";
 import {
   fetchCustomerGroupSelectOptions,
@@ -12,6 +14,7 @@ import {
 import {
   docId,
   inputClass,
+  mongoIdString,
   refId,
   refName,
   adminPageHeaderClass,
@@ -155,6 +158,9 @@ export default function AdminSalePriceRulesPage() {
         </div>
       </div>
 
+      <StaffReadOnlyBanner />
+
+      <AdminWriteGate>
       <form
         onSubmit={(e) => void createSaleRule(e)}
         className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end"
@@ -232,6 +238,7 @@ export default function AdminSalePriceRulesPage() {
           </button>
         </div>
       </form>
+      </AdminWriteGate>
 
       <div className={`card ${adminTableWrapClass} p-4`}>
         {loading ? (
@@ -265,7 +272,7 @@ export default function AdminSalePriceRulesPage() {
                     <td className="px-3 py-2">{row.isActive ? "✓" : "—"}</td>
                     <td className="px-3 py-2 text-right">
                       <Link
-                        href={`/admin/gia-ban/${row.packageId}`}
+                        href={`/admin/gia-ban/${mongoIdString(row.packageId)}`}
                         className="text-sm font-semibold text-[#1d6be8] hover:underline"
                       >
                         Chỉnh bậc giá →

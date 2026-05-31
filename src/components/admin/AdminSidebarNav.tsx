@@ -15,7 +15,7 @@ const NAV = [
   { href: "/admin/nha-cung-cap", label: "Nhà cung cấp" },
   { href: "/admin/kho-sim", label: "Kho SIM" },
   { href: "/admin/import", label: "Import", adminOnly: true },
-  { href: "/admin/users", label: "Người dùng", adminOnly: true },
+  { href: "/admin/users", label: "Người dùng" },
   { href: "/admin/nhom-khach", label: "Nhóm khách", adminOnly: true },
   { href: "/admin/trang", label: "Trang CMS", adminOnly: true },
   { href: "/admin/seo", label: "SEO", adminOnly: true },

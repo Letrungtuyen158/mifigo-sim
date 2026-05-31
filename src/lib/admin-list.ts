@@ -1,3 +1,5 @@
+import { mongoIdString } from "@/lib/admin-utils";
+
 /** Matches BE `PaginationDto`: default page=1, limit=20, max limit=100 */
 export const ADMIN_LIST_LIMIT = 20;
 
@@ -20,8 +22,13 @@ export function buildAdminListQuery(
   });
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
-      if (value !== undefined && value !== "") {
-        params.set(key, String(value));
+      if (value === undefined || value === "") continue;
+      const serialized =
+        typeof value === "string" || typeof value === "number"
+          ? String(value)
+          : mongoIdString(value);
+      if (serialized && serialized !== "[object Object]") {
+        params.set(key, serialized);
       }
     }
   }
@@ -35,8 +42,13 @@ export function buildOptionalQuery(
   const params = new URLSearchParams();
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
-      if (value !== undefined && value !== "") {
-        params.set(key, String(value));
+      if (value === undefined || value === "") continue;
+      const serialized =
+        typeof value === "string" || typeof value === "number"
+          ? String(value)
+          : mongoIdString(value);
+      if (serialized && serialized !== "[object Object]") {
+        params.set(key, serialized);
       }
     }
   }

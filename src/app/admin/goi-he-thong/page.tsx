@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminWriteGate from "@/components/admin/AdminWriteGate";
+import StaffReadOnlyBanner from "@/components/admin/StaffReadOnlyBanner";
 import AdminPagination from "@/components/admin/AdminPagination";
+import { useCanAdminWrite } from "@/contexts/AdminRoleContext";
 import CountryMultiSelect from "@/components/admin/CountryMultiSelect";
 import { mapSystemPackageRow } from "@/lib/api/mappers";
 import { fetchCountrySelectOptions, type SelectOption } from "@/lib/admin-selects";
-import { inputClass } from "@/lib/admin-utils";
+import { inputClass, mongoIdString } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 import { formatApiPackageType, formatDataGb, formatSimType } from "@/lib/format";
 
@@ -18,6 +21,7 @@ const STATUSES = ["active", "inactive", "draft"] as const;
 type SystemPackageRow = ReturnType<typeof mapSystemPackageRow>;
 
 export default function AdminPackagesPage() {
+  const canWrite = useCanAdminWrite();
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<SystemPackageRow[]>([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
@@ -140,12 +144,15 @@ export default function AdminPackagesPage() {
       {lastCreatedId ? (
         <div className="card flex flex-wrap items-center justify-between gap-3 border-[#1d6be8]/30 bg-[#1d6be8]/5 p-4 text-sm">
           <span>Gói vừa tạo cần cấu hình giá bán trước khi lên search public.</span>
-          <Link href={`/admin/gia-ban/${lastCreatedId}`} className="btn-primary text-sm">
+          <Link href={`/admin/gia-ban/${mongoIdString(lastCreatedId)}`} className="btn-primary text-sm">
             Cấu hình giá bán →
           </Link>
         </div>
       ) : null}
 
+      <StaffReadOnlyBanner />
+
+      <AdminWriteGate>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 font-bold">Tạo gói mới</h2>
         <input
@@ -210,6 +217,7 @@ export default function AdminPackagesPage() {
           Tạo gói
         </button>
       </form>
+      </AdminWriteGate>
 
       <form
         onSubmit={applyFilters}
@@ -270,22 +278,26 @@ export default function AdminPackagesPage() {
                 </div>
               </div>
               <Link
-                href={`/admin/gia-ban/${p.id}`}
+                href={`/admin/gia-ban/${mongoIdString(p.id)}`}
                 className="text-sm font-semibold text-[#1d6be8] hover:underline"
               >
                 Giá bán
               </Link>
-              <select
-                className={`${inputClass} w-32`}
-                defaultValue={p.status}
-                onChange={(e) => void update(p.id, { status: e.target.value })}
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              {canWrite ? (
+                <select
+                  className={`${inputClass} w-32`}
+                  defaultValue={p.status}
+                  onChange={(e) => void update(p.id, { status: e.target.value })}
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-sm text-slate-600">{p.status}</span>
+              )}
             </div>
           ))
         )}

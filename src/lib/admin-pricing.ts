@@ -14,6 +14,7 @@ import {
   paginatedItems,
   type AdminPaginated,
 } from "@/lib/admin-list";
+import { mongoIdString } from "@/lib/admin-utils";
 import type {
   ChannelPricing,
   PackagePricingRow,
@@ -37,7 +38,7 @@ async function readJson<T>(res: Response): Promise<T> {
 }
 
 function packageIdOf(doc: JsonDoc) {
-  return String(doc._id || doc.id || "");
+  return mongoIdString(doc._id) || mongoIdString(doc.id);
 }
 
 /** GET /admin/packages — list đã gồm salePrice, costPrice, profit */
@@ -93,7 +94,7 @@ export async function fetchSupplierPriceRowsForPackage(
 
   const items = priceItems.map((price) => ({
     ...mapSupplierPriceRow(price, pkgDoc),
-    id: String(price._id || price.id),
+    id: mongoIdString(price._id) || mongoIdString(price.id),
     packageMongoId: packageId,
   }));
 
@@ -119,8 +120,12 @@ export async function fetchSupplierPriceRowsForPackage(
 
 /** GET /admin/sale-price-rules?packageId= — trang chi tiết giá bán */
 export async function fetchChannelPricingForPackage(
-  packageId: string
+  packageIdInput: string
 ): Promise<ChannelPricingRow> {
+  const packageId = mongoIdString(packageIdInput);
+  if (!packageId) {
+    throw new Error("packageId không hợp lệ");
+  }
   const qs = buildAdminListQuery(1, ADMIN_LIST_LIMIT, { packageId });
   const [rulesRes, pkgRes] = await Promise.all([
     fetch(`/api/admin/sale-price-rules?${qs}`),

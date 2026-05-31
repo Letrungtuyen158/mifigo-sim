@@ -2,7 +2,10 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminWriteGate from "@/components/admin/AdminWriteGate";
+import StaffReadOnlyBanner from "@/components/admin/StaffReadOnlyBanner";
 import AdminPagination from "@/components/admin/AdminPagination";
+import { useCanAdminWrite } from "@/contexts/AdminRoleContext";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
@@ -13,6 +16,7 @@ import {
 type BoolFilter = "" | "true" | "false";
 
 export default function AdminCountriesPage() {
+  const canWrite = useCanAdminWrite();
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
     items: [],
     total: 0,
@@ -118,6 +122,9 @@ export default function AdminCountriesPage() {
         </p>
       </div>
 
+      <StaffReadOnlyBanner />
+
+      <AdminWriteGate>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <input className={inputClass} placeholder="Tên EN" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={inputClass} placeholder="Tên VI" value={form.nameVi} required onChange={(e) => setForm({ ...form, nameVi: e.target.value })} />
@@ -130,6 +137,7 @@ export default function AdminCountriesPage() {
         </label>
         <button type="submit" className="btn-primary sm:col-span-2">Thêm quốc gia</button>
       </form>
+      </AdminWriteGate>
 
       <form
         onSubmit={applyFilters}
@@ -210,10 +218,18 @@ export default function AdminCountriesPage() {
                     <td className="px-3 py-2">{String(c.code)}</td>
                     <td className="px-3 py-2">{String(c.slug)}</td>
                     <td className="px-3 py-2">
-                      <input type="checkbox" defaultChecked={!!c.isPopular} onChange={(e) => void update(id, { isPopular: e.target.checked })} />
+                      {canWrite ? (
+                        <input type="checkbox" defaultChecked={!!c.isPopular} onChange={(e) => void update(id, { isPopular: e.target.checked })} />
+                      ) : (
+                        c.isPopular ? "Có" : "Không"
+                      )}
                     </td>
                     <td className="px-3 py-2">
-                      <input type="checkbox" defaultChecked={c.isActive !== false} onChange={(e) => void update(id, { isActive: e.target.checked })} />
+                      {canWrite ? (
+                        <input type="checkbox" defaultChecked={c.isActive !== false} onChange={(e) => void update(id, { isActive: e.target.checked })} />
+                      ) : (
+                        c.isActive !== false ? "Bật" : "Tắt"
+                      )}
                     </td>
                   </tr>
                 );

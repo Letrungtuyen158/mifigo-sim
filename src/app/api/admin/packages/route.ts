@@ -7,5 +7,5 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  return adminPost("/admin/packages", body);
+  return adminPost("/admin/packages", body, "Tạo thất bại", false, true);
 }

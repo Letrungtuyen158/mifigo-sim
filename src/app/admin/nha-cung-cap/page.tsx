@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import AdminWriteGate from "@/components/admin/AdminWriteGate";
+import StaffReadOnlyBanner from "@/components/admin/StaffReadOnlyBanner";
 import AdminPagination from "@/components/admin/AdminPagination";
-import { inputClass, adminPageHeaderClass } from "@/lib/admin-utils";
+import { useCanAdminWrite } from "@/contexts/AdminRoleContext";
+import { inputClass, adminPageHeaderClass, mongoIdString } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
   fetchAdminPaginated,
@@ -13,7 +16,7 @@ import type { Supplier } from "@/lib/types";
 
 function mapSupplierRow(s: Record<string, unknown>): Supplier {
   return {
-    id: String(s._id || s.id),
+    id: mongoIdString(s._id) || mongoIdString(s.id),
     name: String(s.name || ""),
     code: String(s.code || ""),
     note: s.note ? String(s.note) : undefined,
@@ -22,6 +25,7 @@ function mapSupplierRow(s: Record<string, unknown>): Supplier {
 }
 
 export default function AdminSuppliersPage() {
+  const canWrite = useCanAdminWrite();
   const [list, setList] = useState<AdminPaginated<Supplier>>({
     items: [],
     total: 0,
@@ -101,34 +105,48 @@ export default function AdminSuppliersPage() {
     <div className="space-y-4">
       <div className={`${adminPageHeaderClass}`}>
         <h1 className="text-2xl font-black">Nhà cung cấp</h1>
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => void save()}>
-          Lưu trang này
-        </button>
+        {canWrite ? (
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => void save()}>
+            Lưu trang này
+          </button>
+        ) : null}
       </div>
 
+      <StaffReadOnlyBanner />
+
+      <AdminWriteGate>
       <form onSubmit={(e) => void createSupplier(e)} className="card grid gap-3 p-4 sm:grid-cols-3">
         <input className={inputClass} placeholder="Tên NCC" value={createForm.name} required onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} />
         <input className={inputClass} placeholder="Mã code" value={createForm.code} required onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })} />
         <button type="submit" className="btn-primary">Tạo NCC mới</button>
       </form>
+      </AdminWriteGate>
 
       <div className="card space-y-3 p-4">
         {rows.map((s) => (
           <div key={s.id} className="grid gap-3 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-3">
-            <input
-              className={`${inputClass} min-w-0`}
-              value={s.name}
-              onChange={(e) => updateRow(s.id, { name: e.target.value })}
-            />
-            <input className="rounded border bg-slate-50 px-3 py-2 text-sm" value={s.code} readOnly />
-            <label className="flex items-center gap-2 text-sm">
+            {canWrite ? (
               <input
-                type="checkbox"
-                checked={s.active}
-                onChange={(e) => updateRow(s.id, { active: e.target.checked })}
+                className={`${inputClass} min-w-0`}
+                value={s.name}
+                onChange={(e) => updateRow(s.id, { name: e.target.value })}
               />
-              Đang hoạt động
-            </label>
+            ) : (
+              <div className="text-sm font-semibold">{s.name}</div>
+            )}
+            <input className="rounded border bg-slate-50 px-3 py-2 text-sm" value={s.code} readOnly />
+            {canWrite ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={s.active}
+                  onChange={(e) => updateRow(s.id, { active: e.target.checked })}
+                />
+                Đang hoạt động
+              </label>
+            ) : (
+              <div className="text-sm text-slate-600">{s.active ? "Đang hoạt động" : "Tắt"}</div>
+            )}
           </div>
         ))}
         <AdminPagination

@@ -15,5 +15,5 @@ export async function PUT(
 ) {
   const { id } = await ctx.params;
   const body = await req.json();
-  return adminPut(`/admin/packages/${id}`, body);
+  return adminPut(`/admin/packages/${id}`, body, "Cập nhật thất bại", false, true);
 }

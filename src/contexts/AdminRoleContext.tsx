@@ -21,3 +21,7 @@ export function useAdminRole() {
 export function useIsAdmin() {
   return useAdminRole() === "admin";
 }
+
+export function useCanAdminWrite() {
+  return useIsAdmin();
+}

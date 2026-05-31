@@ -1,19 +1,44 @@
+/** Trích ObjectId hex từ string, populate doc, hoặc extended JSON `{ $oid }`. */
+export function mongoIdString(value: unknown): string {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "[object Object]" ? "" : trimmed;
+  }
+  if (typeof value === "number") return String(value);
+  if (typeof value !== "object") return "";
+
+  const doc = value as Record<string, unknown>;
+  if (typeof doc.$oid === "string") return doc.$oid;
+
+  if (doc._id != null) {
+    const nested = mongoIdString(doc._id);
+    if (nested) return nested;
+  }
+  if (doc.id != null) {
+    const nested = mongoIdString(doc.id);
+    if (nested) return nested;
+  }
+
+  const toString = (doc as { toString?: () => string }).toString;
+  if (typeof toString === "function") {
+    const s = toString.call(doc);
+    if (s && !s.startsWith("[object ")) return s;
+  }
+  return "";
+}
+
 export function docId(doc: Record<string, unknown>): string {
-  const id = doc._id;
-  if (!id) return String(doc.id || "");
-  return typeof id === "string" ? id : String(id);
+  return mongoIdString(doc._id) || mongoIdString(doc.id);
 }
 
 /** ObjectId hoặc document populate từ MongoDB */
 export function refId(value: unknown): string {
-  if (value == null || value === "") return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "object") {
-    const doc = value as Record<string, unknown>;
-    if (doc._id != null) return docId(doc);
-    if (doc.id != null) return String(doc.id);
-  }
-  return "";
+  return mongoIdString(value);
+}
+
+export function isMongoId(value: string): boolean {
+  return /^[a-f\d]{24}$/i.test(value);
 }
 
 export function refName(value: unknown): string {

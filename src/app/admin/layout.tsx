@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { isStaffOrAdmin } from "@/lib/api/require-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 import AdminSidebarNav from "@/components/admin/AdminSidebarNav";
 import { AdminRoleProvider } from "@/contexts/AdminRoleContext";
 import { getSessionUser } from "@/lib/auth";
@@ -10,7 +10,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getSessionUser();
-  if (!user || !isStaffOrAdmin(user.role)) redirect("/dang-nhap");
+  if (!user || !canAccessAdminPanel(user.role)) redirect("/dang-nhap");
 
   return (
     <AdminRoleProvider role={user.role}>

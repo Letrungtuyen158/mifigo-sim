@@ -2,16 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import CartLink from "@/components/layout/CartLink";
 import BrandLogo from "@/components/layout/BrandLogo";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { useAuthRole } from "@/hooks/useAuthRole";
+import {
+  canAccessAdminPanel,
+  isCustomerRole,
+  shouldShowStorefrontCheckout,
+} from "@/lib/roles";
 
 export default function Header() {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const [role, setRole] = useState<string>("guest");
+  const { role } = useAuthRole();
   const [open, setOpen] = useState(false);
 
   const NAV = useMemo(
@@ -24,11 +30,9 @@ export default function Header() {
     [t]
   );
 
-  useEffect(() => {
-    void fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => setRole(d.role ?? "guest"));
-  }, [pathname]);
+  const showCart = shouldShowStorefrontCheckout(role);
+  const showMyOrders = isCustomerRole(role);
+  const showAdminLink = canAccessAdminPanel(role);
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -58,31 +62,28 @@ export default function Header() {
 
         <div className="hidden items-center gap-2 md:flex">
           <LanguageSwitcher />
-          <CartLink />
-          <Link
-            href="/tra-cuu?simType=esim"
-            className="btn-primary h-10 px-5"
-          >
+          {showCart ? <CartLink /> : null}
+          <Link href="/tra-cuu?simType=esim" className="btn-primary h-10 px-5">
             {t("common.buyEsim")}
           </Link>
-          {role === "admin" && (
-            <Link href="/admin" className="rounded-md border px-4 py-2 text-sm font-semibold">
+          {showAdminLink ? (
+            <Link
+              href="/admin"
+              className="rounded-md border px-4 py-2 text-sm font-semibold"
+            >
               {t("common.admin")}
             </Link>
-          )}
-          {role !== "guest" && role !== "admin" && (
+          ) : null}
+          {showMyOrders ? (
             <Link
               href="/don-hang-cua-toi"
               className="rounded-md border px-4 py-2 text-sm font-semibold"
             >
               {t("auth.myOrders")}
             </Link>
-          )}
+          ) : null}
           {role === "guest" ? (
-            <Link
-              href="/dang-nhap"
-              className="btn-accent h-10 px-5"
-            >
+            <Link href="/dang-nhap" className="btn-accent h-10 px-5">
               {t("common.login")}
             </Link>
           ) : (
@@ -102,7 +103,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2 md:hidden">
           <LanguageSwitcher />
-          <CartLink />
+          {showCart ? <CartLink /> : null}
           <button
             type="button"
             className="rounded-lg border px-3 py-2"
@@ -134,9 +135,45 @@ export default function Header() {
             >
               {t("common.buyEsim")}
             </Link>
-            <Link href="/dang-nhap" className="btn-accent text-center" onClick={() => setOpen(false)}>
-              {t("common.login")}
-            </Link>
+            {showAdminLink ? (
+              <Link
+                href="/admin"
+                className="rounded-md border px-3 py-2 text-center text-sm font-semibold"
+                onClick={() => setOpen(false)}
+              >
+                {t("common.admin")}
+              </Link>
+            ) : null}
+            {showMyOrders ? (
+              <Link
+                href="/don-hang-cua-toi"
+                className="rounded-md border px-3 py-2 text-center text-sm font-semibold"
+                onClick={() => setOpen(false)}
+              >
+                {t("auth.myOrders")}
+              </Link>
+            ) : null}
+            {role === "guest" ? (
+              <Link
+                href="/dang-nhap"
+                className="btn-accent text-center"
+                onClick={() => setOpen(false)}
+              >
+                {t("common.login")}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="rounded-md border px-3 py-2 text-sm font-semibold"
+                onClick={() => {
+                  void fetch("/api/auth/logout", { method: "POST" }).then(() =>
+                    window.location.reload()
+                  );
+                }}
+              >
+                {t("common.logout")}
+              </button>
+            )}
           </div>
         </div>
       )}

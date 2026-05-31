@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { adminGet, adminPost } from "@/lib/api/admin-route";
 
 export async function GET(req: NextRequest) {
-  return adminGet("/admin/users", req, "Lỗi tải người dùng", true);
+  return adminGet("/admin/users", req, "Lỗi tải người dùng");
 }
 
 export async function POST(req: Request) {

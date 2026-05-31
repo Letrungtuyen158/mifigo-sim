@@ -1,5 +1,10 @@
 import { decodeJwtPayload, getAccessToken } from "./api/auth-token";
 import { mapBackendUser, mapRoleFromApi } from "./api/mappers";
+import {
+  canAccessAdminPanel,
+  canAdminWrite,
+  isCustomerRole,
+} from "./roles";
 import type { User, UserRole } from "./types";
 
 export async function getSessionUser(): Promise<Omit<User, "password"> | null> {
@@ -28,12 +33,15 @@ export function sanitizeUser(user: Omit<User, "password"> | User) {
   return safe;
 }
 
+export { canAccessAdminPanel, canAdminWrite, isCustomerRole };
+
+/** @deprecated Use canAccessAdminPanel */
 export function canAccessAdmin(role: UserRole | string): boolean {
-  return role === "admin";
+  return canAccessAdminPanel(role);
 }
 
 export function canAccessAgentPricing(role: UserRole | string): boolean {
-  return role === "agent" || role === "admin";
+  return role === "agent" || role === "collaborator" || role === "admin";
 }
 
 export { mapBackendUser };

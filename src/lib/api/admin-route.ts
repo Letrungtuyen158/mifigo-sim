@@ -25,9 +25,12 @@ export async function adminPost(
   path: string,
   body: unknown,
   fallback = "Tạo thất bại",
-  adminOnly = false
+  adminOnly = false,
+  adminWriteOnly = false
 ) {
-  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
+  const auth = adminOnly || adminWriteOnly
+    ? await requireAdmin()
+    : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   try {
     const data = await apiRequest(path, {
@@ -46,9 +49,12 @@ export async function adminPut(
   path: string,
   body: unknown,
   fallback = "Cập nhật thất bại",
-  adminOnly = false
+  adminOnly = false,
+  adminWriteOnly = false
 ) {
-  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
+  const auth = adminOnly || adminWriteOnly
+    ? await requireAdmin()
+    : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   try {
     const data = await apiRequest(path, {

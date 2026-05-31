@@ -3,6 +3,7 @@ import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/lib/api/auth-token";
 import { mapOrderFromApi } from "@/lib/api/mappers";
+import { getSessionUser, isCustomerRole } from "@/lib/auth";
 
 interface PaginatedOrders {
   items: Record<string, unknown>[];
@@ -64,11 +65,21 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getSessionUser();
     const token = await getAccessToken();
-    if (!token) {
+    if (!token || !user) {
       return NextResponse.json(
         { success: false, message: "Vui lòng đăng nhập để đặt hàng." },
         { status: 401 }
+      );
+    }
+    if (!isCustomerRole(user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Tài khoản nhân viên/admin không đặt hàng trên website.",
+        },
+        { status: 403 }
       );
     }
 

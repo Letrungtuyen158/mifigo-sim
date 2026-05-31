@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { postLoginPath } from "@/lib/roles";
 
 type AuthMode = "login" | "register" | "forgot" | "reset";
 
@@ -50,8 +51,7 @@ export default function DangNhapPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || t("auth.login"));
       toast.success(t("auth.loginSuccess"));
-      if (data.user.role === "admin") router.push("/admin");
-      else router.push("/tra-cuu");
+      router.push(postLoginPath(data.user.role));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("auth.login"));
     } finally {

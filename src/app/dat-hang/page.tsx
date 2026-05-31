@@ -16,10 +16,13 @@ import {
 import QuantityStepper from "@/components/ui/QuantityStepper";
 import { tSimType } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
+import { useAuthRole } from "@/hooks/useAuthRole";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 export default function DatHangPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const { role, loading: authLoading } = useAuthRole();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -30,6 +33,13 @@ export default function DatHangPage() {
   useEffect(() => {
     setCart(readCart());
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (canAccessAdminPanel(role)) {
+      router.replace("/admin");
+    }
+  }, [authLoading, role, router]);
 
   function handleRemove(packageId: string) {
     setCart(removeFromCart(packageId));

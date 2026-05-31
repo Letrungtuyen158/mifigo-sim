@@ -2,7 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import AdminOnlyGate from "@/components/admin/AdminOnlyGate";
+import AdminWriteGate from "@/components/admin/AdminWriteGate";
+import StaffReadOnlyBanner from "@/components/admin/StaffReadOnlyBanner";
+import { useCanAdminWrite } from "@/contexts/AdminRoleContext";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { fetchCustomerGroupSelectOptions, type SelectOption } from "@/lib/admin-selects";
 import { docId, inputClass } from "@/lib/admin-utils";
@@ -14,7 +16,8 @@ type UserRow = Record<string, unknown>;
 const ROLES = ["customer", "agent", "collaborator", "staff", "admin"] as const;
 const STATUSES = ["active", "inactive", "blocked"] as const;
 
-function AdminUsersContent() {
+export default function AdminUsersPage() {
+  const canWrite = useCanAdminWrite();
   const [list, setList] = useState<AdminPaginated<UserRow>>({
     items: [],
     total: 0,
@@ -135,6 +138,9 @@ function AdminUsersContent() {
         </p>
       </div>
 
+      <StaffReadOnlyBanner />
+
+      <AdminWriteGate>
       <form onSubmit={(e) => void createUser(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 font-bold">Tạo mới</h2>
         <input className={inputClass} placeholder="Họ tên" value={form.fullName} required onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
@@ -163,6 +169,7 @@ function AdminUsersContent() {
         </label>
         <button type="submit" className="btn-primary sm:col-span-2">Tạo user</button>
       </form>
+      </AdminWriteGate>
 
       <form
         onSubmit={applyFilters}
@@ -233,40 +240,54 @@ function AdminUsersContent() {
                   ) : null}
                 </div>
                 <div className="text-sm text-slate-600">{String(u.email || "")}</div>
-                <select
-                  className={inputClass}
-                  defaultValue={String(u.role || "customer")}
-                  onChange={(e) => void updateUser(id, { role: e.target.value })}
-                >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>{formatUserRole(r)}</option>
-                  ))}
-                </select>
-                <select
-                  className={inputClass}
-                  defaultValue={String(u.status || "active")}
-                  onChange={(e) => void updateUser(id, { status: e.target.value })}
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>{formatUserStatus(s)}</option>
-                  ))}
-                </select>
-                <select
-                  className={inputClass}
-                  defaultValue={String(u.customerGroupId || "")}
-                  onChange={(e) =>
-                    void updateUser(id, {
-                      customerGroupId: e.target.value || null,
-                    })
-                  }
-                >
-                  <option value="">— Nhóm —</option>
-                  {groupOptions.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
+                {canWrite ? (
+                  <select
+                    className={inputClass}
+                    defaultValue={String(u.role || "customer")}
+                    onChange={(e) => void updateUser(id, { role: e.target.value })}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>{formatUserRole(r)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-sm">{formatUserRole(String(u.role || "customer"))}</div>
+                )}
+                {canWrite ? (
+                  <select
+                    className={inputClass}
+                    defaultValue={String(u.status || "active")}
+                    onChange={(e) => void updateUser(id, { status: e.target.value })}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{formatUserStatus(s)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-sm">{formatUserStatus(String(u.status || "active"))}</div>
+                )}
+                {canWrite ? (
+                  <select
+                    className={inputClass}
+                    defaultValue={String(u.customerGroupId || "")}
+                    onChange={(e) =>
+                      void updateUser(id, {
+                        customerGroupId: e.target.value || null,
+                      })
+                    }
+                  >
+                    <option value="">— Nhóm —</option>
+                    {groupOptions.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-sm text-slate-500">
+                    {groupOptions.find((g) => g.id === String(u.customerGroupId || ""))?.label || "—"}
+                  </div>
+                )}
               </div>
             );
           })
@@ -283,10 +304,3 @@ function AdminUsersContent() {
   );
 }
 
-export default function AdminUsersPage() {
-  return (
-    <AdminOnlyGate>
-      <AdminUsersContent />
-    </AdminOnlyGate>
-  );
-}
