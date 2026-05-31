@@ -26,7 +26,7 @@ export default function AdminSimInventoryPage() {
     page: 1,
   });
 
-  const loadInventory = useCallback(async (p = page) => {
+  const loadInventory = useCallback(async (p: number) => {
     try {
       const inv = await fetchAdminPaginated<Record<string, unknown>>(
         "/api/admin/sim-inventory",
@@ -43,9 +43,9 @@ export default function AdminSimInventoryPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải kho");
     }
-  }, [page]);
+  }, []);
 
-  const loadLowStock = useCallback(async (p = lowStockPage) => {
+  const loadLowStock = useCallback(async (p: number) => {
     try {
       const data = await fetchAdminPaginated<Record<string, unknown>>(
         "/api/admin/sim-inventory/low-stock",
@@ -64,7 +64,7 @@ export default function AdminSimInventoryPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải cảnh báo tồn");
     }
-  }, [lowStockPage]);
+  }, []);
 
   useEffect(() => {
     void loadInventory(page);

@@ -78,7 +78,7 @@ export function paginatedItems<T>(data: unknown): T[] {
 /** Một trang lớn (dropdown, v.v.) — tối đa limit BE */
 export async function fetchAdminListItems<T>(
   apiPath: string,
-  limit = 100
+  limit = ADMIN_LIST_LIMIT
 ): Promise<T[]> {
   const data = await fetchAdminPaginated<T>(apiPath, 1, limit);
   return data.items;

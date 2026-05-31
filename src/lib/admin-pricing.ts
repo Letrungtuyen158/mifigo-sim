@@ -6,15 +6,20 @@ import {
 } from "@/lib/api/mappers";
 import {
   ADMIN_LIST_LIMIT,
+  buildAdminListQuery,
   fetchAdminListItems,
   fetchAdminPaginated,
   paginatedItems,
+  type AdminPaginated,
 } from "@/lib/admin-list";
 import type { ChannelPricing, Supplier, SupplierPackage } from "@/lib/types";
 
 type JsonDoc = Record<string, unknown>;
 
-const LOOKUP_LIMIT = 100;
+export type ChannelPricingRow = ChannelPricing & {
+  packageName: string;
+  costPrice: number;
+};
 
 async function readJson<T>(res: Response): Promise<T> {
   const json = (await res.json()) as { success?: boolean; data?: unknown; message?: string };
@@ -28,35 +33,52 @@ function packageIdOf(doc: JsonDoc) {
   return String(doc._id || doc.id || "");
 }
 
-async function fetchPackageSupplierPrices(packageId: string): Promise<JsonDoc[]> {
-  const res = await fetch(
-    `/api/admin/packages/${packageId}/supplier-prices?limit=${LOOKUP_LIMIT}`
-  );
+async function fetchPackageSupplierPrices(
+  packageId: string,
+  page = 1,
+  limit = ADMIN_LIST_LIMIT
+): Promise<JsonDoc[]> {
+  const qs = buildAdminListQuery(page, limit);
+  const res = await fetch(`/api/admin/packages/${packageId}/supplier-prices?${qs}`);
+  const data = await readJson<JsonDoc[] | { items: JsonDoc[] }>(res);
+  return paginatedItems<JsonDoc>(data);
+}
+
+async function fetchSalePriceRulesForPackage(
+  packageId: string,
+  limit = ADMIN_LIST_LIMIT
+): Promise<JsonDoc[]> {
+  const qs = buildAdminListQuery(1, limit, { packageId });
+  const res = await fetch(`/api/admin/sale-price-rules?${qs}`);
   const data = await readJson<JsonDoc[] | { items: JsonDoc[] }>(res);
   return paginatedItems<JsonDoc>(data);
 }
 
 /** GET /api/admin/suppliers */
-export async function fetchAdminSuppliers(limit = LOOKUP_LIMIT): Promise<Supplier[]> {
+export async function fetchAdminSuppliers(limit = ADMIN_LIST_LIMIT): Promise<Supplier[]> {
   const rows = await fetchAdminListItems<JsonDoc>("/api/admin/suppliers", limit);
   return rows.map(mapSupplierFromApi);
 }
 
-/** GET /api/admin/packages + /api/admin/packages/:id/supplier-prices */
+/**
+ * Một trang gói + giá nhập NCC tương ứng.
+ * Tránh gọi supplier-prices cho toàn bộ catalog (N+1 × limit=100).
+ */
 export async function fetchSupplierPriceRows(
-  maxPackages = LOOKUP_LIMIT
-): Promise<SupplierPackage[]> {
+  page = 1,
+  limit = ADMIN_LIST_LIMIT
+): Promise<AdminPaginated<SupplierPackage>> {
   const packagesPage = await fetchAdminPaginated<JsonDoc>(
     "/api/admin/packages",
-    1,
-    maxPackages
+    page,
+    limit
   );
 
   const nested = await Promise.all(
     packagesPage.items.map(async (pkg) => {
       const mongoId = packageIdOf(pkg);
       if (!mongoId) return [];
-      const prices = await fetchPackageSupplierPrices(mongoId);
+      const prices = await fetchPackageSupplierPrices(mongoId, 1, limit);
       return prices.map((price) => ({
         ...mapSupplierPriceRow(price, pkg),
         id: String(price._id || price.id),
@@ -65,35 +87,63 @@ export async function fetchSupplierPriceRows(
     })
   );
 
-  return nested.flat();
+  return {
+    items: nested.flat(),
+    total: packagesPage.total,
+    page: packagesPage.page,
+    limit: packagesPage.limit,
+    totalPages: packagesPage.totalPages,
+  };
 }
 
-/** GET /api/admin/sale-price-rules */
+/** Giá bán kênh theo trang gói — 1 trang packages + rules/cost cho từng gói trên trang. */
+export async function fetchChannelPricingPage(
+  page = 1,
+  limit = ADMIN_LIST_LIMIT
+): Promise<AdminPaginated<ChannelPricingRow>> {
+  const packagesPage = await fetchAdminPaginated<JsonDoc>(
+    "/api/admin/packages",
+    page,
+    limit
+  );
+
+  const items = await Promise.all(
+    packagesPage.items.map(async (pkg) => {
+      const mongoId = packageIdOf(pkg);
+      const [rules, prices] = await Promise.all([
+        fetchSalePriceRulesForPackage(mongoId, limit),
+        fetchPackageSupplierPrices(mongoId, 1, 1),
+      ]);
+      const pricing = mapSaleRulesToPricing(mongoId, rules);
+      const costPrice = prices.length ? Number(prices[0].costPrice || 0) : 0;
+      return {
+        ...pricing,
+        packageName: String(pkg.name || pkg.slug || mongoId),
+        costPrice,
+      };
+    })
+  );
+
+  return {
+    items,
+    total: packagesPage.total,
+    page: packagesPage.page,
+    limit: packagesPage.limit,
+    totalPages: packagesPage.totalPages,
+  };
+}
+
+/** @deprecated Dùng fetchChannelPricingPage với phân trang */
 export async function fetchChannelPricing(
-  maxRules = LOOKUP_LIMIT
+  page = 1,
+  limit = ADMIN_LIST_LIMIT
 ): Promise<ChannelPricing[]> {
-  const res = await fetch(
-    `/api/admin/sale-price-rules?page=1&limit=${Math.min(LOOKUP_LIMIT, maxRules)}`
-  );
-  const data = await readJson<JsonDoc[] | { items: JsonDoc[] }>(res);
-  const rules = paginatedItems<JsonDoc>(data);
-
-  const rulesByPackage = new Map<string, JsonDoc[]>();
-  for (const rule of rules) {
-    const pid = String((rule.packageId as JsonDoc)?._id || rule.packageId || "");
-    if (!pid) continue;
-    const list = rulesByPackage.get(pid) || [];
-    list.push(rule);
-    rulesByPackage.set(pid, list);
-  }
-
-  return [...rulesByPackage.entries()].map(([packageId, list]) =>
-    mapSaleRulesToPricing(packageId, list)
-  );
+  const data = await fetchChannelPricingPage(page, limit);
+  return data.items;
 }
 
 /** Dropdown gói — GET /api/admin/packages */
-export async function fetchPackageSelectOptions(limit = LOOKUP_LIMIT) {
+export async function fetchPackageSelectOptions(limit = ADMIN_LIST_LIMIT) {
   const page = await fetchAdminPaginated<JsonDoc>("/api/admin/packages", 1, limit);
   return page.items.map((pkg) => ({
     id: packageIdOf(pkg),
@@ -140,4 +190,4 @@ export async function saveChannelPricing(pricing: ChannelPricing[]) {
   }
 }
 
-export { ADMIN_LIST_LIMIT, LOOKUP_LIMIT as ADMIN_PRICING_LOOKUP_LIMIT };
+export { ADMIN_LIST_LIMIT };

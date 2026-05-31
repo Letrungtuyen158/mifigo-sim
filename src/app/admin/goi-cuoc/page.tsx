@@ -2,25 +2,45 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { fetchAdminSuppliers, fetchSupplierPriceRows, saveSupplierPriceRows } from "@/lib/admin-pricing";
+import AdminPagination from "@/components/admin/AdminPagination";
+import {
+  ADMIN_LIST_LIMIT,
+  fetchAdminSuppliers,
+  fetchSupplierPriceRows,
+  saveSupplierPriceRows,
+} from "@/lib/admin-pricing";
 import { adminPageHeaderClass, adminTableWrapClass } from "@/lib/admin-utils";
 import { formatVnd } from "@/lib/format";
 import type { Supplier, SupplierPackage } from "@/lib/types";
 
 export default function AdminPackagesPage() {
+  const [page, setPage] = useState(1);
   const [packages, setPackages] = useState<SupplierPackage[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const [supplierRows, priceRows] = await Promise.all([
+      const [supplierRows, pricePage] = await Promise.all([
         fetchAdminSuppliers(),
-        fetchSupplierPriceRows(),
+        fetchSupplierPriceRows(p),
       ]);
       setSuppliers(supplierRows);
-      setPackages(priceRows);
+      setPackages(pricePage.items);
+      setMeta({
+        total: pricePage.total,
+        totalPages: pricePage.totalPages,
+        limit: pricePage.limit,
+        page: pricePage.page,
+      });
+      setPage(pricePage.page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải giá nhập");
     } finally {
@@ -29,8 +49,8 @@ export default function AdminPackagesPage() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(page);
+  }, [page, load]);
 
   function updateCost(id: string, costPrice: number) {
     setPackages((prev) =>
@@ -42,7 +62,7 @@ export default function AdminPackagesPage() {
     try {
       await saveSupplierPriceRows(packages);
       toast.success("Đã lưu giá nhập gói cước");
-      void load();
+      void load(page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lưu thất bại");
     }
@@ -102,6 +122,13 @@ export default function AdminPackagesPage() {
             </tbody>
           </table>
         )}
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export default function AdminImportPage() {
   const [supplierId, setSupplierId] = useState("");
   const [packageId, setPackageId] = useState("");
 
-  const loadBatches = useCallback(async (p = page) => {
+  const loadBatches = useCallback(async (p: number) => {
     try {
       const data = await fetchAdminPaginated<Record<string, unknown>>(
         "/api/admin/import/batches",
@@ -35,14 +35,14 @@ export default function AdminImportPage() {
     } catch {
       toast.error("Lỗi tải lịch sử import");
     }
-  }, [page]);
+  }, []);
 
   useEffect(() => {
     void loadBatches(page);
-  }, [page]);
+  }, [page, loadBatches]);
 
   useEffect(() => {
-    void fetchAdminListItems<Record<string, unknown>>("/api/admin/suppliers", 100)
+    void fetchAdminListItems<Record<string, unknown>>("/api/admin/suppliers")
       .then((data) => {
         setSuppliers(data);
         if (data[0]) setSupplierId(docId(data[0]));

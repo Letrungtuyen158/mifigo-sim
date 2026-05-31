@@ -2,18 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import {
-  fetchChannelPricing,
-  fetchSupplierPriceRows,
+  ADMIN_LIST_LIMIT,
+  fetchChannelPricingPage,
   saveChannelPricing,
+  type ChannelPricingRow,
 } from "@/lib/admin-pricing";
 import { adminPageHeaderClass, adminTableWrapClass, inputClass } from "@/lib/admin-utils";
 import { formatVnd } from "@/lib/format";
-import type { ChannelPricing, SupplierPackage } from "@/lib/types";
+import type { ChannelPricing } from "@/lib/types";
 
 export default function AdminPricingPage() {
-  const [pricing, setPricing] = useState<ChannelPricing[]>([]);
-  const [packages, setPackages] = useState<SupplierPackage[]>([]);
+  const [page, setPage] = useState(1);
+  const [pricing, setPricing] = useState<ChannelPricingRow[]>([]);
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [newRule, setNewRule] = useState({
     packageId: "",
@@ -26,15 +34,18 @@ export default function AdminPricingPage() {
     costPrice: 0,
   });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const [pricingRows, priceRows] = await Promise.all([
-        fetchChannelPricing(),
-        fetchSupplierPriceRows(),
-      ]);
-      setPricing(pricingRows);
-      setPackages(priceRows);
+      const data = await fetchChannelPricingPage(p);
+      setPricing(data.items);
+      setMeta({
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
+      });
+      setPage(data.page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải giá bán");
     } finally {
@@ -43,8 +54,8 @@ export default function AdminPricingPage() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(page);
+  }, [page, load]);
 
   function updatePricing(id: string, field: keyof ChannelPricing, value: number) {
     setPricing((prev) =>
@@ -56,7 +67,7 @@ export default function AdminPricingPage() {
     try {
       await saveChannelPricing(pricing);
       toast.success("Đã lưu giá bán kênh");
-      void load();
+      void load(page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lưu thất bại");
     }
@@ -75,7 +86,7 @@ export default function AdminPricingPage() {
     });
     if (!res.ok) return toast.error("Tạo rule thất bại");
     toast.success("Đã tạo sale-price-rule");
-    void load();
+    void load(page);
   }
 
   async function createSupplierPrice(e: React.FormEvent) {
@@ -87,7 +98,7 @@ export default function AdminPricingPage() {
     });
     if (!res.ok) return toast.error("Tạo giá NCC thất bại");
     toast.success("Đã tạo supplier-package-price");
-    void load();
+    void load(page);
   }
 
   return (
@@ -124,66 +135,68 @@ export default function AdminPricingPage() {
               </tr>
             </thead>
             <tbody>
-              {pricing.map((p) => {
-                const pkg = packages.find(
-                  (x) => x.packageMongoId === p.packageId || x.id === p.packageId
-                );
-                return (
-                  <tr key={p.id} className="border-t">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">{pkg?.name || p.packageId}</div>
-                      <div className="text-xs text-slate-500">
-                        Nhập: {formatVnd(pkg?.costPrice || 0)}
-                      </div>
-                    </td>
-                    {(
-                      [
-                        ["retailPrice", null],
-                        ["agentTier1Qty", "agentTier1Price"],
-                        ["agentTier2Qty", "agentTier2Price"],
-                        ["agentTier3Qty", "agentTier3Price"],
-                      ] as const
-                    ).map(([qtyKey, priceKey], idx) =>
-                      idx === 0 ? (
-                        <td key="retail" className="px-3 py-2">
+              {pricing.map((p) => (
+                <tr key={p.id} className="border-t">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">{p.packageName || p.packageId}</div>
+                    <div className="text-xs text-slate-500">
+                      Nhập: {formatVnd(p.costPrice || 0)}
+                    </div>
+                  </td>
+                  {(
+                    [
+                      ["retailPrice", null],
+                      ["agentTier1Qty", "agentTier1Price"],
+                      ["agentTier2Qty", "agentTier2Price"],
+                      ["agentTier3Qty", "agentTier3Price"],
+                    ] as const
+                  ).map(([qtyKey, priceKey], idx) =>
+                    idx === 0 ? (
+                      <td key="retail" className="px-3 py-2">
+                        <input
+                          type="number"
+                          className="w-28 rounded border px-2 py-1"
+                          value={p.retailPrice}
+                          onChange={(e) =>
+                            updatePricing(p.id, "retailPrice", Number(e.target.value))
+                          }
+                        />
+                      </td>
+                    ) : (
+                      <td key={String(qtyKey)} className="px-3 py-2">
+                        <div className="flex gap-1">
                           <input
                             type="number"
-                            className="w-28 rounded border px-2 py-1"
-                            value={p.retailPrice}
+                            className="w-16 rounded border px-2 py-1"
+                            value={p[qtyKey]}
                             onChange={(e) =>
-                              updatePricing(p.id, "retailPrice", Number(e.target.value))
+                              updatePricing(p.id, qtyKey, Number(e.target.value))
                             }
                           />
-                        </td>
-                      ) : (
-                        <td key={String(qtyKey)} className="px-3 py-2">
-                          <div className="flex gap-1">
-                            <input
-                              type="number"
-                              className="w-16 rounded border px-2 py-1"
-                              value={p[qtyKey]}
-                              onChange={(e) =>
-                                updatePricing(p.id, qtyKey, Number(e.target.value))
-                              }
-                            />
-                            <input
-                              type="number"
-                              className="w-24 rounded border px-2 py-1"
-                              value={p[priceKey!]}
-                              onChange={(e) =>
-                                updatePricing(p.id, priceKey!, Number(e.target.value))
-                              }
-                            />
-                          </div>
-                        </td>
-                      )
-                    )}
-                  </tr>
-                );
-              })}
+                          <input
+                            type="number"
+                            className="w-24 rounded border px-2 py-1"
+                            value={p[priceKey!]}
+                            onChange={(e) =>
+                              updatePricing(p.id, priceKey!, Number(e.target.value))
+                            }
+                          />
+                        </div>
+                      </td>
+                    )
+                  )}
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

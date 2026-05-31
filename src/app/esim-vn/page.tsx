@@ -30,7 +30,7 @@ export default function EsimVnPage() {
     page: 1,
   });
 
-  const load = useCallback(async (p = page) => {
+  const load = useCallback(async (p: number) => {
     const [me, esim] = await Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
       fetch(`/api/esim-vn?page=${p}&limit=${ADMIN_LIST_LIMIT}`).then((r) => r.json()),
@@ -46,7 +46,7 @@ export default function EsimVnPage() {
       });
       setPage(esim.page ?? p);
     }
-  }, [page]);
+  }, []);
 
   useEffect(() => {
     void load(page).catch(() => toast.error(t("common.loading")));

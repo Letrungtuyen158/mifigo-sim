@@ -2,26 +2,45 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { fetchAdminSuppliers, fetchSupplierPriceRows } from "@/lib/admin-pricing";
+import AdminPagination from "@/components/admin/AdminPagination";
+import {
+  ADMIN_LIST_LIMIT,
+  fetchAdminSuppliers,
+  fetchSupplierPriceRows,
+} from "@/lib/admin-pricing";
 import { formatDataGb, formatSimType, formatVnd } from "@/lib/format";
 import type { Supplier, SupplierPackage } from "@/lib/types";
 
 export default function AdminComparePage() {
+  const [page, setPage] = useState(1);
   const [packages, setPackages] = useState<SupplierPackage[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
   const [country, setCountry] = useState("");
   const [apiBest, setApiBest] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const [supplierRows, priceRows] = await Promise.all([
+      const [supplierRows, pricePage] = await Promise.all([
         fetchAdminSuppliers(),
-        fetchSupplierPriceRows(),
+        fetchSupplierPriceRows(p),
       ]);
       setSuppliers(supplierRows);
-      setPackages(priceRows);
+      setPackages(pricePage.items);
+      setMeta({
+        total: pricePage.total,
+        totalPages: pricePage.totalPages,
+        limit: pricePage.limit,
+        page: pricePage.page,
+      });
+      setPage(pricePage.page);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Lỗi tải dữ liệu so sánh");
     } finally {
@@ -30,8 +49,8 @@ export default function AdminComparePage() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(page);
+  }, [page, load]);
 
   const countries = useMemo(
     () => [...new Set(packages.map((p) => p.country))],
@@ -151,6 +170,14 @@ export default function AdminComparePage() {
           </div>
         ))}
       </div>
+
+      <AdminPagination
+        page={meta.page}
+        limit={meta.limit}
+        total={meta.total}
+        totalPages={meta.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }
