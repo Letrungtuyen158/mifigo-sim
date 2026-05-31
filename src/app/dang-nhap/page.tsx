@@ -135,7 +135,6 @@ export default function DangNhapPage() {
         {mode === "login" && (
           <form onSubmit={(e) => void handleLogin(e)}>
             <h1 className="text-2xl font-black">{t("auth.login")}</h1>
-            <p className="mt-2 text-sm text-slate-600">{t("auth.loginHint")}</p>
             <div className="mt-5 space-y-3">
               <input
                 className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"

@@ -208,7 +208,6 @@ const vi: TranslationDict = {
     login: "Đăng nhập",
     register: "Đăng ký",
     forgot: "Quên mật khẩu",
-    loginHint: "Đại lý/CTV hoặc admin. Demo: admin@mifigo.com / Admin@123456",
     registerHint: "Tạo tài khoản đại lý/CTV hoặc khách hàng để xem giá và đặt hàng.",
     forgotHint: "Nhập email đã đăng ký. Hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu qua email.",
     email: "Email",

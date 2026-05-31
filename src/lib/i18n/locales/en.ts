@@ -208,7 +208,6 @@ const en: TranslationDict = {
     login: "Sign in",
     register: "Register",
     forgot: "Forgot password",
-    loginHint: "Agent/partner or admin. Demo: admin@mifigo.com / Admin@123456",
     registerHint: "Create agent/partner or customer account to view prices and order.",
     forgotHint: "Enter registered email. Reset instructions will be sent by email.",
     email: "Email",

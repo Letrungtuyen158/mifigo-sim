@@ -208,7 +208,6 @@ const zh: TranslationDict = {
     login: "登录",
     register: "注册",
     forgot: "忘记密码",
-    loginHint: "代理/合作方或管理员。演示：admin@mifigo.com / Admin@123456",
     registerHint: "创建代理/合作方或客户账户以查看价格并下单。",
     forgotHint: "输入注册邮箱。重置说明将通过邮件发送。",
     email: "邮箱",
