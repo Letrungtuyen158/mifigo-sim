@@ -1,28 +1,44 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
-import { ADMIN_LIST_LIMIT, fetchAdminArray, normalizePaginated } from "@/lib/admin-list";
+import {
+  ADMIN_LIST_LIMIT,
+  fetchAdminPaginated,
+  type AdminPaginated,
+} from "@/lib/admin-list";
 
 const TYPES = ["retail", "agent", "collaborator", "vip"] as const;
 
 export default function AdminCustomerGroupsPage() {
-  const [allItems, setAllItems] = useState<Record<string, unknown>[]>([]);
+  const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: ADMIN_LIST_LIMIT,
+    totalPages: 1,
+  });
   const [page, setPage] = useState(1);
   const [form, setForm] = useState({ name: "", code: "", type: "retail", description: "" });
 
-  const list = useMemo(
-    () => normalizePaginated<Record<string, unknown>>(allItems, page, ADMIN_LIST_LIMIT),
-    [allItems, page]
-  );
+  const load = useCallback(async (p = page) => {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/customer-groups",
+        p
+      );
+      setList(data);
+      setPage(data.page);
+    } catch {
+      toast.error("Lỗi tải nhóm khách");
+    }
+  }, [page]);
 
   useEffect(() => {
-    void fetchAdminArray<Record<string, unknown>>("/api/admin/customer-groups")
-      .then(setAllItems)
-      .catch(() => toast.error("Lỗi tải nhóm khách"));
-  }, []);
+    void load(page);
+  }, [page]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -35,9 +51,8 @@ export default function AdminCustomerGroupsPage() {
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo nhóm");
     setForm({ name: "", code: "", type: "retail", description: "" });
-    const refreshed = await fetchAdminArray<Record<string, unknown>>("/api/admin/customer-groups");
-    setAllItems(refreshed);
     setPage(1);
+    void load(1);
   }
 
   async function update(id: string, patch: Record<string, unknown>) {
@@ -48,14 +63,12 @@ export default function AdminCustomerGroupsPage() {
     });
     if (!res.ok) return toast.error("Cập nhật thất bại");
     toast.success("Đã lưu");
-    const refreshed = await fetchAdminArray<Record<string, unknown>>("/api/admin/customer-groups");
-    setAllItems(refreshed);
+    void load(page);
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black">Nhóm khách hàng</h1>
-      <p className="text-xs text-slate-500">API BE trả về full list — phân trang hiển thị phía FE.</p>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <input className={inputClass} placeholder="Tên nhóm" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={inputClass} placeholder="Mã code" value={form.code} required onChange={(e) => setForm({ ...form, code: e.target.value })} />

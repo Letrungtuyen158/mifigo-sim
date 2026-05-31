@@ -4,35 +4,60 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { inputClass } from "@/lib/admin-utils";
-import { ADMIN_LIST_LIMIT, fetchAdminArray, normalizePaginated } from "@/lib/admin-list";
+import {
+  ADMIN_LIST_LIMIT,
+  fetchAdminPaginated,
+  type AdminPaginated,
+} from "@/lib/admin-list";
 import type { Supplier } from "@/lib/types";
 
+function mapSupplierRow(s: Record<string, unknown>): Supplier {
+  return {
+    id: String(s._id || s.id),
+    name: String(s.name || ""),
+    code: String(s.code || ""),
+    note: s.note ? String(s.note) : undefined,
+    active: s.isActive !== false,
+  };
+}
+
 export default function AdminSuppliersPage() {
-  const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([]);
+  const [list, setList] = useState<AdminPaginated<Supplier>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: ADMIN_LIST_LIMIT,
+    totalPages: 1,
+  });
   const [page, setPage] = useState(1);
+  const [edits, setEdits] = useState<Record<string, Partial<Supplier>>>({});
   const [createForm, setCreateForm] = useState({ name: "", code: "", note: "" });
 
-  const list = useMemo(
-    () => normalizePaginated<Supplier>(allSuppliers, page, ADMIN_LIST_LIMIT),
-    [allSuppliers, page]
+  const rows = useMemo(
+    () => list.items.map((s) => ({ ...s, ...edits[s.id] })),
+    [list.items, edits]
   );
 
-  const loadAll = useCallback(async () => {
-    const raw = await fetchAdminArray<Record<string, unknown>>("/api/admin/suppliers");
-    setAllSuppliers(
-      raw.map((s) => ({
-        id: String(s._id || s.id),
-        name: String(s.name || ""),
-        code: String(s.code || ""),
-        note: s.note ? String(s.note) : undefined,
-        active: s.isActive !== false,
-      }))
-    );
-  }, []);
+  const load = useCallback(async (p = page) => {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/suppliers",
+        p
+      );
+      setList({
+        ...data,
+        items: data.items.map(mapSupplierRow),
+      });
+      setPage(data.page);
+      setEdits({});
+    } catch {
+      toast.error("Lỗi tải NCC");
+    }
+  }, [page]);
 
   useEffect(() => {
-    void loadAll().catch(() => toast.error("Lỗi tải NCC"));
-  }, [loadAll]);
+    void load(page);
+  }, [page]);
 
   async function createSupplier(e: React.FormEvent) {
     e.preventDefault();
@@ -45,34 +70,37 @@ export default function AdminSuppliersPage() {
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo NCC");
     setCreateForm({ name: "", code: "", note: "" });
-    await loadAll();
     setPage(1);
+    void load(1);
   }
 
   async function save() {
-    const pageItems = list.items;
-    const res = await fetch("/api/admin/store", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suppliers: pageItems }),
-    });
-    if (!res.ok) return toast.error("Lưu thất bại");
+    const res = await Promise.all(
+      rows.map((s) =>
+        fetch(`/api/admin/suppliers/${s.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: s.name,
+            isActive: s.active,
+            note: s.note,
+          }),
+        })
+      )
+    );
+    if (res.some((r) => !r.ok)) return toast.error("Lưu thất bại");
     toast.success("Đã lưu nhà cung cấp trên trang này");
-    await loadAll();
+    void load(page);
   }
 
-  function updateRow(idx: number, patch: Partial<Supplier>) {
-    const globalIdx = (page - 1) * ADMIN_LIST_LIMIT + idx;
-    setAllSuppliers((prev) => prev.map((s, i) => (i === globalIdx ? { ...s, ...patch } : s)));
+  function updateRow(id: string, patch: Partial<Supplier>) {
+    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black">Nhà cung cấp</h1>
-          <p className="text-xs text-slate-500">API BE trả về full list — phân trang hiển thị phía FE.</p>
-        </div>
+        <h1 className="text-2xl font-black">Nhà cung cấp</h1>
         <button type="button" className="btn-primary" onClick={() => void save()}>
           Lưu trang này
         </button>
@@ -85,19 +113,19 @@ export default function AdminSuppliersPage() {
       </form>
 
       <div className="card space-y-3 p-4">
-        {list.items.map((s, idx) => (
+        {rows.map((s) => (
           <div key={s.id} className="grid gap-3 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-3">
             <input
               className="rounded border px-3 py-2 text-sm"
               value={s.name}
-              onChange={(e) => updateRow(idx, { name: e.target.value })}
+              onChange={(e) => updateRow(s.id, { name: e.target.value })}
             />
             <input className="rounded border bg-slate-50 px-3 py-2 text-sm" value={s.code} readOnly />
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={s.active}
-                onChange={(e) => updateRow(idx, { active: e.target.checked })}
+                onChange={(e) => updateRow(s.id, { active: e.target.checked })}
               />
               Đang hoạt động
             </label>

@@ -1,7 +1,8 @@
+import { NextRequest } from "next/server";
 import { adminGet, adminPost } from "@/lib/api/admin-route";
 
-export async function GET() {
-  return adminGet("/admin/customer-groups");
+export async function GET(req: NextRequest) {
+  return adminGet("/admin/customer-groups", req);
 }
 
 export async function POST(req: Request) {

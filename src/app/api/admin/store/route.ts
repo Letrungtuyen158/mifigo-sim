@@ -28,27 +28,31 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
-    const [suppliersRaw, packagesPage, saleRules, ordersPage, inventoryPage] =
+    type Paginated<T> = { items: T[]; total: number };
+
+    const [suppliersPage, packagesPage, saleRulesPage, ordersPage, inventoryPage] =
       await Promise.all([
-        apiRequest<MongoDoc[]>("/admin/suppliers", { token }),
-        apiRequest<{ items: MongoDoc[] }>("/admin/packages?limit=100", { token }),
-        apiRequest<MongoDoc[]>("/admin/sale-price-rules", { token }),
-        apiRequest<{ items: MongoDoc[] }>("/admin/orders?limit=100", { token }),
-        apiRequest<{ items: MongoDoc[] }>(
-          "/admin/sim-inventory?limit=200",
-          { token }
-        ),
+        apiRequest<Paginated<MongoDoc>>("/admin/suppliers?limit=100", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/packages?limit=100", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/sale-price-rules?limit=100", {
+          token,
+        }),
+        apiRequest<Paginated<MongoDoc>>("/admin/orders?limit=100", { token }),
+        apiRequest<Paginated<MongoDoc>>("/admin/sim-inventory?limit=100", {
+          token,
+        }),
       ]);
 
-    const suppliers = (suppliersRaw || []).map(mapSupplierFromApi);
+    const suppliers = (suppliersPage.items || []).map(mapSupplierFromApi);
+    const saleRules = saleRulesPage.items || [];
 
     const supplierPricesNested = await Promise.all(
       (packagesPage.items || []).map(async (pkg) => {
-        const prices = await apiRequest<MongoDoc[]>(
-          `/admin/packages/${String(pkg._id)}/supplier-prices`,
+        const pricesPage = await apiRequest<Paginated<MongoDoc>>(
+          `/admin/packages/${String(pkg._id)}/supplier-prices?limit=100`,
           { token }
         );
-        return (prices || []).map((price) => ({
+        return (pricesPage.items || []).map((price) => ({
           ...mapSupplierPriceRow(price, pkg),
           id: String(price._id),
           packageMongoId: String(pkg._id),
@@ -58,7 +62,7 @@ export async function GET() {
     const packages = supplierPricesNested.flat();
 
     const rulesByPackage = new Map<string, MongoDoc[]>();
-    for (const rule of saleRules || []) {
+    for (const rule of saleRules) {
       const packageId = String(
         (rule.packageId as MongoDoc)?._id || rule.packageId || ""
       );

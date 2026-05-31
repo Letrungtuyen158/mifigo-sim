@@ -1,32 +1,53 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
-import { ADMIN_LIST_LIMIT, fetchAdminArray, normalizePaginated } from "@/lib/admin-list";
+import {
+  ADMIN_LIST_LIMIT,
+  fetchAdminListItems,
+  fetchAdminPaginated,
+  type AdminPaginated,
+} from "@/lib/admin-list";
 
 export default function AdminImportPage() {
-  const [allBatches, setAllBatches] = useState<Record<string, unknown>[]>([]);
+  const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: ADMIN_LIST_LIMIT,
+    totalPages: 1,
+  });
   const [page, setPage] = useState(1);
   const [suppliers, setSuppliers] = useState<Record<string, unknown>[]>([]);
   const [supplierId, setSupplierId] = useState("");
   const [packageId, setPackageId] = useState("");
 
-  const list = useMemo(
-    () => normalizePaginated<Record<string, unknown>>(allBatches, page, ADMIN_LIST_LIMIT),
-    [allBatches, page]
-  );
+  const loadBatches = useCallback(async (p = page) => {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/import/batches",
+        p
+      );
+      setList(data);
+      setPage(data.page);
+    } catch {
+      toast.error("Lỗi tải lịch sử import");
+    }
+  }, [page]);
 
   useEffect(() => {
-    void fetchAdminArray<Record<string, unknown>>("/api/admin/import/batches")
-      .then(setAllBatches)
-      .catch(() => toast.error("Lỗi tải lịch sử import"));
-    void fetchAdminArray<Record<string, unknown>>("/api/admin/suppliers")
+    void loadBatches(page);
+  }, [page]);
+
+  useEffect(() => {
+    void fetchAdminListItems<Record<string, unknown>>("/api/admin/suppliers", 100)
       .then((data) => {
         setSuppliers(data);
         if (data[0]) setSupplierId(docId(data[0]));
-      });
+      })
+      .catch(() => toast.error("Lỗi tải NCC"));
   }, []);
 
   async function importPrices(e: React.ChangeEvent<HTMLInputElement>) {
@@ -40,8 +61,8 @@ export default function AdminImportPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.message || "Import thất bại");
     toast.success(`Import xong: ${data.data?.successRows ?? 0} dòng OK`);
-    setAllBatches(await fetchAdminArray<Record<string, unknown>>("/api/admin/import/batches"));
     setPage(1);
+    void loadBatches(1);
     e.target.value = "";
   }
 
@@ -62,7 +83,6 @@ export default function AdminImportPage() {
 
       <div className="card overflow-x-auto p-4">
         <h2 className="mb-3 font-bold">Lịch sử import</h2>
-        <p className="mb-2 text-xs text-slate-500">BE trả tối đa 50 batch gần nhất.</p>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>

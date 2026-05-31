@@ -31,9 +31,12 @@ export default async function AdminDashboardPage() {
   let stats = empty;
 
   try {
-    const [suppliers, packages, ordersPending, ordersReview, inventory, recent] =
+    const [suppliersPage, packages, ordersPending, ordersReview, inventory, recent] =
       await Promise.all([
-        apiRequest<Record<string, unknown>[]>("/admin/suppliers", { token }),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/suppliers?limit=1",
+          { token }
+        ),
         apiRequest<Paginated<Record<string, unknown>>>(
           "/admin/packages?limit=1",
           { token }
@@ -58,7 +61,7 @@ export default async function AdminDashboardPage() {
 
     stats = {
       packageCount: packages.total,
-      supplierCount: suppliers.length,
+      supplierCount: suppliersPage.total,
       pendingOrders: ordersPending.total + ordersReview.total,
       esimCount: inventory.total,
       recentOrders: (recent.items || []).map((o) => mapOrderFromApi(o)),

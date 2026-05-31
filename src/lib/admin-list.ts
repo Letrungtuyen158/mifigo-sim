@@ -67,9 +67,19 @@ export async function fetchAdminPaginated<T>(
   return normalizePaginated<T>(json.data, page, limit);
 }
 
-/** BE returns full array (no page/limit) — paginate on client after one fetch */
-export async function fetchAdminArray<T>(apiPath: string): Promise<T[]> {
-  const res = await fetch(apiPath);
-  const json = (await res.json()) as { data?: unknown };
-  return Array.isArray(json.data) ? (json.data as T[]) : [];
+/** Lấy mảng `items` từ response paginated hoặc legacy array */
+export function paginatedItems<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[];
+  const p = data as Record<string, unknown> | null;
+  if (!p) return [];
+  return (p.items as T[] | undefined) ?? [];
+}
+
+/** Một trang lớn (dropdown, v.v.) — tối đa limit BE */
+export async function fetchAdminListItems<T>(
+  apiPath: string,
+  limit = 100
+): Promise<T[]> {
+  const data = await fetchAdminPaginated<T>(apiPath, 1, limit);
+  return data.items;
 }
