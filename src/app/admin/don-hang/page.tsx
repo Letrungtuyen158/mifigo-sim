@@ -18,6 +18,13 @@ export default function AdminOrdersPage() {
     void load();
   }, []);
 
+  async function issueInvoice(orderId: string) {
+    const res = await fetch(`/api/admin/orders/${orderId}/invoice`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.message || "Xuất hóa đơn thất bại");
+    toast.success(`Hóa đơn: ${data.data?.invoiceCode || "OK"}`);
+  }
+
   async function updateStatus(orderId: string, status: string) {
     const res = await fetch("/api/admin/orders", {
       method: "PATCH",
@@ -69,6 +76,13 @@ export default function AdminOrdersPage() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-[#1d6be8] px-3 py-1 text-xs font-semibold text-[#1d6be8]"
+                onClick={() => void issueInvoice(order.id)}
+              >
+                Xuất hóa đơn
+              </button>
               {[
                 ["payment_review", "Chờ duyệt CK"],
                 ["paid", "Đã thanh toán"],

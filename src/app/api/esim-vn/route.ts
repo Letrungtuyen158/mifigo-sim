@@ -48,9 +48,18 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const packageId = String(formData.get("packageId") || "").trim();
+    const supplierId = String(formData.get("supplierId") || "").trim();
+
     if (!(file instanceof File)) {
       return NextResponse.json(
         { success: false, message: "Vui lòng chọn file Excel/CSV." },
+        { status: 400 }
+      );
+    }
+    if (!packageId || !supplierId) {
+      return NextResponse.json(
+        { success: false, message: "Vui lòng chọn gói cước và nhà cung cấp." },
         { status: 400 }
       );
     }
@@ -58,8 +67,10 @@ export async function POST(request: Request) {
     const upload = new FormData();
     upload.set("file", file);
     upload.set("simType", "esim");
+    upload.set("packageId", packageId);
+    upload.set("supplierId", supplierId);
 
-    const result = await apiRequest<{ importedCount?: number; successCount?: number }>(
+    const result = await apiRequest<{ successRows?: number }>(
       "/admin/import/sim-inventory",
       {
         method: "POST",
@@ -70,7 +81,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      imported: result.importedCount ?? result.successCount ?? 0,
+      imported: result.successRows ?? 0,
     });
   } catch (error) {
     const { status, message } = toNextError(error, "Import thất bại");

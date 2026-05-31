@@ -13,7 +13,9 @@ export default function DonHangPage() {
   const { t, locale } = useTranslation();
   const [order, setOrder] = useState<Order | null>(null);
   const [bankAccount, setBankAccount] = useState("");
-  const [proof, setProof] = useState("");
+  const [transactionCode, setTransactionCode] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     void fetch(`/api/orders/${params.code}`)
@@ -25,22 +27,38 @@ export default function DonHangPage() {
   }, [params.code]);
 
   async function submitPayment() {
-    if (!order || !proof.trim()) {
-      toast.error(t("order.proofRequired"));
+    if (!order) return;
+    if (!proofFile) {
+      toast.error(t("order.proofImageRequired"));
       return;
     }
-    const res = await fetch(`/api/orders/${order.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paymentProof: proof }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      toast.error(data.message || t("order.submitProof"));
-      return;
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.set("proofImage", proofFile, proofFile.name);
+      if (transactionCode.trim()) {
+        formData.set("transactionCode", transactionCode.trim());
+      }
+
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PATCH",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || t("order.submitProof"));
+        return;
+      }
+      setOrder(data.data);
+      setProofFile(null);
+      setTransactionCode("");
+      toast.success(t("order.proofSent"));
+    } catch {
+      toast.error(t("order.submitProof"));
+    } finally {
+      setSubmitting(false);
     }
-    setOrder(data.data);
-    toast.success(t("order.proofSent"));
   }
 
   function printBill() {
@@ -78,7 +96,11 @@ export default function DonHangPage() {
             <div>
               {t("order.status")}: {tOrderStatus(locale, order.status)}
             </div>
-            <div>{new Date(order.createdAt).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US")}</div>
+            <div>
+              {new Date(order.createdAt).toLocaleString(
+                locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US"
+              )}
+            </div>
           </div>
         </div>
 
@@ -133,14 +155,37 @@ export default function DonHangPage() {
       {order.status === "pending_payment" && (
         <div className="card mt-6 p-5 print:hidden">
           <h2 className="font-bold">{t("order.confirmPayment")}</h2>
-          <input
-            className="mt-3 w-full rounded-xl border px-3 py-2.5 text-sm"
-            placeholder={t("order.transactionNote")}
-            value={proof}
-            onChange={(e) => setProof(e.target.value)}
-          />
-          <button type="button" className="btn-primary mt-3" onClick={() => void submitPayment()}>
-            {t("order.submitProof")}
+          <p className="mt-1 text-sm text-slate-600">{t("order.proofHint")}</p>
+
+          <label className="mt-4 block text-sm font-semibold">
+            {t("order.proofImage")} *
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="mt-1 w-full text-sm"
+              disabled={submitting}
+              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+
+          <label className="mt-3 block text-sm font-semibold">
+            {t("order.transactionNote")}
+            <input
+              className="mt-1 w-full rounded-xl border px-3 py-2.5 text-sm font-normal"
+              placeholder={t("order.transactionNoteOptional")}
+              value={transactionCode}
+              disabled={submitting}
+              onChange={(e) => setTransactionCode(e.target.value)}
+            />
+          </label>
+
+          <button
+            type="button"
+            className="btn-primary mt-4"
+            disabled={submitting}
+            onClick={() => void submitPayment()}
+          >
+            {submitting ? t("order.submittingProof") : t("order.submitProof")}
           </button>
         </div>
       )}

@@ -70,6 +70,14 @@ export default function Header() {
               {t("common.admin")}
             </Link>
           )}
+          {role !== "guest" && role !== "admin" && (
+            <Link
+              href="/don-hang-cua-toi"
+              className="rounded-full border px-4 py-2 text-sm font-semibold"
+            >
+              {t("auth.myOrders")}
+            </Link>
+          )}
           {role === "guest" ? (
             <Link
               href="/dang-nhap"

@@ -286,7 +286,10 @@ export function mapOrderFromApi(
     };
   });
 
+  const bankTransfer = (payment?.bankTransfer || {}) as MongoDoc;
   const proof =
+    bankTransfer.transactionCode ||
+    bankTransfer.proofImageUrl ||
     payment?.transactionCode ||
     payment?.proofImageUrl ||
     payment?.note ||

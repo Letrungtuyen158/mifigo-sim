@@ -32,6 +32,8 @@ export interface Supplier {
 
 export interface SupplierPackage {
   id: string;
+  /** MongoDB Package `_id` (distinct from supplier-price row `id`) */
+  packageMongoId?: string;
   supplierId: string;
   country: string;
   countryCode: string;

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useTranslation } from "@/contexts/LanguageContext";
 
-type AuthMode = "login" | "register" | "forgot";
+type AuthMode = "login" | "register" | "forgot" | "reset";
 
 export default function DangNhapPage() {
   const router = useRouter();
@@ -20,7 +20,15 @@ export default function DangNhapPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [registerRole, setRegisterRole] = useState<"agent" | "customer">("agent");
+  const [resetToken, setResetToken] = useState("");
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+      setResetToken(token);
+      setMode("reset");
+    }
+  }, []);
 
   const TABS = useMemo(
     () => [
@@ -64,7 +72,6 @@ export default function DangNhapPage() {
           phone,
           password,
           confirmPassword,
-          role: registerRole,
         }),
       });
       const data = await res.json();
@@ -75,6 +82,27 @@ export default function DangNhapPage() {
       setConfirmPassword("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("auth.register"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: resetToken, newPassword: password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || t("auth.resetPassword"));
+      toast.success(data.message || t("auth.resetSuccess"));
+      setMode("login");
+      setPassword("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("auth.resetPassword"));
     } finally {
       setLoading(false);
     }
@@ -105,7 +133,7 @@ export default function DangNhapPage() {
   return (
     <div className="container-page flex min-h-[60vh] items-center justify-center py-10">
       <div className="card w-full max-w-md p-6">
-        {mode !== "forgot" ? (
+        {mode !== "forgot" && mode !== "reset" ? (
           <div className="mb-5 flex rounded-full bg-slate-100 p-1">
             {TABS.map((tab) => (
               <button
@@ -194,16 +222,6 @@ export default function DangNhapPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <select
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[#1d6be8] focus:ring-2 focus:ring-[#1d6be8]/20"
-                value={registerRole}
-                onChange={(e) =>
-                  setRegisterRole(e.target.value as "agent" | "customer")
-                }
-              >
-                <option value="agent">{t("auth.roleAgent")}</option>
-                <option value="customer">{t("auth.roleCustomer")}</option>
-              </select>
               <PasswordInput
                 placeholder={t("auth.passwordMin")}
                 autoComplete="new-password"
@@ -230,6 +248,24 @@ export default function DangNhapPage() {
                 {t("auth.login")}
               </button>
             </p>
+          </form>
+        )}
+
+        {mode === "reset" && (
+          <form onSubmit={(e) => void handleReset(e)}>
+            <h1 className="text-2xl font-black">{t("auth.resetPasswordTitle")}</h1>
+            <p className="mt-2 text-sm text-slate-600">{t("auth.resetPasswordHint")}</p>
+            <div className="mt-5 space-y-3">
+              <PasswordInput
+                placeholder={t("auth.newPassword")}
+                autoComplete="new-password"
+                value={password}
+                onChange={setPassword}
+              />
+            </div>
+            <button type="submit" disabled={loading || !resetToken} className="btn-primary mt-5 w-full">
+              {loading ? t("auth.processing") : t("auth.resetPassword")}
+            </button>
           </form>
         )}
 

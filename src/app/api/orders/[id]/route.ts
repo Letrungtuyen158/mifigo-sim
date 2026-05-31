@@ -97,11 +97,6 @@ export async function PATCH(
       );
     }
 
-    const body = (await request.json()) as {
-      paymentProof?: string;
-      status?: string;
-    };
-
     const detail = await findOrderByCodeOrId(id, token);
     if (!detail) {
       return NextResponse.json(
@@ -111,26 +106,56 @@ export async function PATCH(
     }
 
     const orderId = String(detail.order._id || detail.order.id);
+    const contentType = request.headers.get("content-type") || "";
 
-    if (body.paymentProof) {
-      const placeholderPng = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        "base64"
-      );
-      const formData = new FormData();
-      formData.set("orderId", orderId);
-      formData.set("transactionCode", body.paymentProof);
-      formData.set(
-        "proofImage",
-        new Blob([placeholderPng], { type: "image/png" }),
-        "proof.png"
-      );
+    if (contentType.includes("multipart/form-data")) {
+      const incoming = await request.formData();
+      const proofImage = incoming.get("proofImage");
+      const transactionCode = String(incoming.get("transactionCode") || "").trim();
+
+      if (!(proofImage instanceof File) || proofImage.size === 0) {
+        return NextResponse.json(
+          { success: false, message: "Vui lòng chọn ảnh xác nhận chuyển khoản." },
+          { status: 400 }
+        );
+      }
+
+      const allowed = /^image\/(jpeg|png|webp|jpg)$/i;
+      if (!allowed.test(proofImage.type)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (proofImage.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { success: false, message: "Ảnh tối đa 5MB." },
+          { status: 400 }
+        );
+      }
+
+      const upload = new FormData();
+      upload.set("orderId", orderId);
+      upload.set("proofImage", proofImage, proofImage.name || "proof.jpg");
+      if (transactionCode) upload.set("transactionCode", transactionCode);
 
       await apiRequest("/customer/payments/upload-proof", {
         method: "POST",
         token,
-        body: formData,
+        body: upload,
       });
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Gửi multipart/form-data với proofImage và transactionCode (tùy chọn).",
+        },
+        { status: 400 }
+      );
     }
 
     const refreshed = await findOrderByCodeOrId(orderId, token);

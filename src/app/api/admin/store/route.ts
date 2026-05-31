@@ -51,6 +51,7 @@ export async function GET() {
         return (prices || []).map((price) => ({
           ...mapSupplierPriceRow(price, pkg),
           id: String(price._id),
+          packageMongoId: String(pkg._id),
         }));
       })
     );

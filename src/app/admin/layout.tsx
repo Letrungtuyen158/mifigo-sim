@@ -4,12 +4,21 @@ import { getSessionUser } from "@/lib/auth";
 
 const NAV = [
   { href: "/admin", label: "Tổng quan" },
-  { href: "/admin/so-sanh", label: "So sánh NCC" },
-  { href: "/admin/goi-cuoc", label: "Gói cước" },
-  { href: "/admin/gia-ban", label: "Giá bán kênh" },
   { href: "/admin/don-hang", label: "Đơn hàng" },
-  { href: "/admin/esim-vn", label: "eSIM VN import" },
+  { href: "/admin/users", label: "Người dùng" },
+  { href: "/admin/nhom-khach", label: "Nhóm khách" },
+  { href: "/admin/quoc-gia", label: "Quốc gia" },
   { href: "/admin/nha-cung-cap", label: "Nhà cung cấp" },
+  { href: "/admin/goi-he-thong", label: "Gói hệ thống" },
+  { href: "/admin/goi-cuoc", label: "Giá nhập NCC" },
+  { href: "/admin/gia-ban", label: "Giá bán kênh" },
+  { href: "/admin/so-sanh", label: "So sánh NCC" },
+  { href: "/admin/kho-sim", label: "Kho SIM" },
+  { href: "/admin/import", label: "Import" },
+  { href: "/admin/esim-vn", label: "eSIM VN" },
+  { href: "/admin/trang", label: "Trang CMS" },
+  { href: "/admin/seo", label: "SEO" },
+  { href: "/admin/nhat-ky", label: "Nhật ký" },
 ];
 
 export default async function AdminLayout({
@@ -29,7 +38,7 @@ export default async function AdminLayout({
         </div>
       </div>
       <div className="container-page grid gap-6 py-6 lg:grid-cols-[220px_1fr]">
-        <aside className="card h-fit p-3">
+        <aside className="card max-h-[calc(100vh-120px)] overflow-y-auto p-3">
           <nav className="flex flex-col gap-1">
             {NAV.map((item) => (
               <Link

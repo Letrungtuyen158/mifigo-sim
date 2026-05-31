@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { formatDataGb, formatSimType, formatVnd } from "@/lib/format";
 import type { SupplierPackage } from "@/lib/types";
 
@@ -8,6 +9,7 @@ export default function AdminComparePage() {
   const [packages, setPackages] = useState<SupplierPackage[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [country, setCountry] = useState("");
+  const [apiBest, setApiBest] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     void fetch("/api/admin/store")
@@ -47,6 +49,16 @@ export default function AdminComparePage() {
     }));
   }, [packages, country]);
 
+  async function fetchBestSupplier(packageMongoId: string) {
+    const res = await fetch(
+      `/api/admin/packages/${packageMongoId}/best-supplier?quantity=1&channel=anonymous`
+    );
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.message || "Lỗi API best-supplier");
+    setApiBest(data.data as Record<string, unknown>);
+    toast.success("Đã gọi API best-supplier");
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -69,12 +81,32 @@ export default function AdminComparePage() {
         ))}
       </select>
 
+      {apiBest?.bestSupplier ? (
+        <div className="card bg-blue-50 p-4 text-sm">
+          <strong>API best-supplier:</strong>{" "}
+          {String((apiBest.bestSupplier as Record<string, unknown>).supplierName)} — cost{" "}
+          {formatVnd(Number((apiBest.bestSupplier as Record<string, unknown>).costPrice))} — sale{" "}
+          {formatVnd(Number((apiBest.bestSupplier as Record<string, unknown>).salePrice))}
+        </div>
+      ) : null}
+
       <div className="space-y-4">
         {grouped.map(({ key, list, best }) => (
           <div key={key} className="card p-4">
-            <div className="font-bold">
-              {best.country} · {formatSimType(best.simType)} · {formatDataGb(best.dataGb)} ·{" "}
-              {best.days} ngày
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="font-bold">
+                {best.country} · {formatSimType(best.simType)} · {formatDataGb(best.dataGb)} ·{" "}
+                {best.days} ngày
+              </div>
+              {best.packageMongoId ? (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-[#1d6be8]"
+                  onClick={() => void fetchBestSupplier(best.packageMongoId!)}
+                >
+                  Gọi API best-supplier
+                </button>
+              ) : null}
             </div>
             <div className="mt-2 text-sm text-emerald-700">
               Rẻ nhất: {suppliers.find((s) => s.id === best.supplierId)?.name} —{" "}
