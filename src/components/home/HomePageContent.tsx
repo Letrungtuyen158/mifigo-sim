@@ -28,7 +28,6 @@ export default function HomePageContent() {
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
               {brand.name}
-              <span className="text-[#1d6be8]"> eSIM</span>
             </h1>
             <p className="mt-4 text-lg font-medium text-slate-700 sm:text-xl">
               {t("home.heroTitle")}
