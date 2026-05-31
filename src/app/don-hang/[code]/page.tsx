@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import OrderStatusBadge from "@/components/admin/OrderStatusBadge";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { tOrderStatus, tSimType } from "@/lib/i18n";
 import { formatVnd } from "@/lib/format";
@@ -93,8 +94,13 @@ export default function DonHangPage() {
             <div>
               {t("order.orderCode")}: <strong>{order.code}</strong>
             </div>
-            <div>
-              {t("order.status")}: {tOrderStatus(locale, order.status)}
+            <div className="mt-1 flex flex-wrap items-center justify-end gap-2">
+              <span className="font-medium text-slate-600">{t("order.status")}:</span>
+              <OrderStatusBadge
+                status={order.status}
+                label={tOrderStatus(locale, order.status)}
+                className="px-3 py-1 text-sm"
+              />
             </div>
             <div>
               {new Date(order.createdAt).toLocaleString(
