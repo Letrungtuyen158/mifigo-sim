@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mifigo SIM
 
-## Getting Started
+Web tra cứu gói cước SIM/eSIM du lịch — frontend Next.js kết nối backend NestJS (`mifigo-sim-api`).
 
-First, run the development server:
+## Chạy local
+
+### 1. Backend API (mifigo-sim-api)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd ../mifigo-sim-api
+npm install
+cp .env.example .env
+# Khởi động MongoDB, rồi:
+npm run seed:example
+npm run start:dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+API: http://localhost:3000/api · Swagger: http://localhost:3000/api/docs
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Frontend (repo này)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.example .env.local
+npm run dev -- -p 3001
+```
 
-## Learn More
+Mở http://localhost:3001
 
-To learn more about Next.js, take a look at the following resources:
+> BE mặc định port **3000**, FE chạy port **3001** để tránh trùng.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tài khoản demo (sau `seed:example`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role  | Email              | Password      |
+|-------|--------------------|---------------|
+| Admin | admin@mifigo.com   | Admin@123456  |
+| Agent | agent@test.com     | Test@123456   |
+| Customer | customer@test.com | Test@123456 |
 
-## Deploy on Vercel
+## Kiến trúc
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **UI**: Next.js 15 App Router (`src/app`, `src/components`)
+- **BFF**: Route handlers `src/app/api/*` proxy sang NestJS, giữ format response cũ cho UI
+- **Auth**: JWT lưu httpOnly cookie `mifigo_sim_token`
+- **Mapper**: `src/lib/api/mappers.ts` chuyển đổi schema BE ↔ FE
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Biến môi trường
+
+| Biến | Mô tả |
+|------|-------|
+| `MIFIGO_API_URL` | URL gốc API, ví dụ `http://localhost:3000/api` |
+
+## Tính năng
+
+### Website khách
+- Trang chủ, tra cứu gói, đặt hàng (yêu cầu đăng nhập), xem bill
+- eSIM VN: admin import Excel qua API, xuất CSV
+
+### Phân quyền giá
+- Khách / anonymous: giá retail
+- Đại lý / CTV: giá theo tier số lượng
+- Admin: giá nhập NCC, so sánh, chỉnh giá bán
+
+### Admin
+- So sánh giá nhập NCC
+- Sửa giá nhập / giá bán kênh
+- Duyệt đơn / thanh toán thủ công
+- Import kho eSIM
+
+## Ghi chú
+
+- Dữ liệu JSON local (`data/store.json`) **không còn dùng** — toàn bộ qua MongoDB backend.
+- Đặt hàng bắt buộc đăng nhập (theo API backend).
+- Quên mật khẩu gửi email (cấu hình SMTP trong BE).

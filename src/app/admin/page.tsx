@@ -1,0 +1,111 @@
+import Link from "next/link";
+import { getAccessToken } from "@/lib/api/auth-token";
+import { apiRequest } from "@/lib/api/client";
+import { mapOrderFromApi } from "@/lib/api/mappers";
+import { formatVnd } from "@/lib/format";
+
+interface Paginated<T> {
+  items: T[];
+  total: number;
+}
+
+export default async function AdminDashboardPage() {
+  const token = await getAccessToken();
+
+  const empty = {
+    packageCount: 0,
+    supplierCount: 0,
+    pendingOrders: 0,
+    esimCount: 0,
+    recentOrders: [] as ReturnType<typeof mapOrderFromApi>[],
+  };
+
+  if (!token) {
+    return (
+      <div className="card p-6 text-slate-600">
+        Vui lòng đăng nhập admin để xem tổng quan.
+      </div>
+    );
+  }
+
+  let stats = empty;
+
+  try {
+    const [suppliers, packages, ordersPending, ordersReview, inventory, recent] =
+      await Promise.all([
+        apiRequest<Record<string, unknown>[]>("/admin/suppliers", { token }),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/packages?limit=1",
+          { token }
+        ),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/orders?status=pending_payment&limit=1",
+          { token }
+        ),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/orders?status=waiting_payment_confirmation&limit=1",
+          { token }
+        ),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/sim-inventory?limit=1",
+          { token }
+        ),
+        apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/orders?limit=5",
+          { token }
+        ),
+      ]);
+
+    stats = {
+      packageCount: packages.total,
+      supplierCount: suppliers.length,
+      pendingOrders: ordersPending.total + ordersReview.total,
+      esimCount: inventory.total,
+      recentOrders: (recent.items || []).map((o) => mapOrderFromApi(o)),
+    };
+  } catch {
+    stats = empty;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-black">Tổng quan</h1>
+        <p className="text-sm text-slate-600">
+          Quản lý giá nhập NCC, giá bán kênh, đơn hàng và eSIM VN.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Gói cước", stats.packageCount, "/admin/goi-cuoc"],
+          ["Nhà cung cấp", stats.supplierCount, "/admin/nha-cung-cap"],
+          ["Đơn chờ xử lý", stats.pendingOrders, "/admin/don-hang"],
+          ["eSIM VN", stats.esimCount, "/admin/esim-vn"],
+        ].map(([label, value, href]) => (
+          <Link key={String(label)} href={String(href)} className="card p-5">
+            <div className="text-sm text-slate-500">{label}</div>
+            <div className="mt-1 text-3xl font-black text-[#1d6be8]">{value}</div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="card p-5">
+        <h2 className="font-bold">Đơn hàng gần đây</h2>
+        <div className="mt-4 space-y-2 text-sm">
+          {stats.recentOrders.map((o) => (
+            <div key={o.id} className="flex justify-between border-b py-2">
+              <span>
+                {o.code} · {o.customerName}
+              </span>
+              <span className="font-semibold">{formatVnd(o.total)}</span>
+            </div>
+          ))}
+          {stats.recentOrders.length === 0 && (
+            <div className="text-slate-500">Chưa có đơn hàng.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

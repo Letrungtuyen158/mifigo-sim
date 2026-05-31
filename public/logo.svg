@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="Mifigo SIM">
+  <defs>
+    <linearGradient id="mifigo-bg" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1d6be8"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="url(#mifigo-bg)"/>
+  <circle cx="24" cy="24" r="13.5" stroke="#fff" stroke-width="2" opacity="0.95"/>
+  <ellipse cx="24" cy="24" rx="5.5" ry="13.5" stroke="#fff" stroke-width="1.6" opacity="0.9"/>
+  <path d="M10.5 24h27" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
+  <path d="M10.5 18.5c4.2 2.2 8.8 3.3 13.5 3.3s9.3-1.1 13.5-3.3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+  <path d="M10.5 29.5c4.2-2.2 8.8-3.3 13.5-3.3s9.3 1.1 13.5 3.3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+  <path d="M31.5 15.2 27.8 20.1 24.2 19.3 25.8 23.6 20.8 27.1 24.6 25.8 27.4 29.8 31.5 15.2Z" fill="#fff"/>
+  <circle cx="33.8" cy="14.2" r="1.2" fill="#f97316"/>
+</svg>
