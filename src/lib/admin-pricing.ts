@@ -162,42 +162,82 @@ export async function fetchBestSupplierComparison(
   return readJson<Record<string, unknown>>(res);
 }
 
-/** PUT /api/admin/supplier-package-prices/:id */
+/** PUT existing rows + POST new supplier-package-prices (BE) */
 export async function saveSupplierPriceRows(
-  rows: Array<Pick<SupplierPackage, "id" | "costPrice">>
+  packageId: string,
+  rows: Array<{
+    supplierPriceId?: string | null;
+    supplierId: string;
+    costPrice: number;
+  }>
 ) {
   const results = await Promise.all(
-    rows.map((row) =>
-      fetch(`/api/admin/supplier-package-prices/${row.id}`, {
-        method: "PUT",
+    rows.map(async (row) => {
+      if (row.supplierPriceId) {
+        return fetch(`/api/admin/supplier-package-prices/${row.supplierPriceId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ costPrice: row.costPrice }),
+        });
+      }
+      if (row.costPrice <= 0) return null;
+      return fetch("/api/admin/supplier-package-prices", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ costPrice: row.costPrice }),
-      })
-    )
+        body: JSON.stringify({
+          packageId,
+          supplierId: row.supplierId,
+          costPrice: row.costPrice,
+        }),
+      });
+    })
   );
-  if (results.some((r) => !r.ok)) {
+  if (results.some((r) => r && !r.ok)) {
     throw new Error("Lưu thất bại");
   }
 }
 
-/** PUT /api/admin/sale-price-rules/:id */
-export async function saveChannelPricing(pricing: ChannelPricing[]) {
-  const results = await Promise.all(
-    pricing.map((p) =>
-      fetch(`/api/admin/sale-price-rules/${p.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tiers: [
-            { minQuantity: 1, maxQuantity: null, salePrice: p.retailPrice },
-            ...pricingToAgentTiers(p),
-          ],
-        }),
-      })
-    )
-  );
-  if (results.some((r) => !r.ok)) {
-    throw new Error("Lưu thất bại");
+async function saveSalePriceRule(
+  ruleId: string,
+  tiers: Array<{ minQuantity: number; maxQuantity?: number | null; salePrice: number }>
+) {
+  const res = await fetch(`/api/admin/sale-price-rules/${ruleId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tiers }),
+  });
+  if (!res.ok) {
+    const json = (await res.json()) as { message?: string };
+    throw new Error(json.message || "Lưu thất bại");
+  }
+}
+
+/** PUT retail rule + PUT/POST agent rule — mỗi kênh là một sale_price_rule riêng (BE) */
+export async function saveChannelPricing(pricing: ChannelPricing) {
+  await saveSalePriceRule(pricing.id, [
+    { minQuantity: 1, maxQuantity: null, salePrice: pricing.retailPrice },
+  ]);
+
+  const agentTiers = pricingToAgentTiers(pricing);
+  if (agentTiers.length === 0) return;
+
+  if (pricing.agentRuleId) {
+    await saveSalePriceRule(pricing.agentRuleId, agentTiers);
+    return;
+  }
+
+  const res = await fetch("/api/admin/sale-price-rules", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      packageId: pricing.packageId,
+      channel: "agent",
+      tiers: agentTiers,
+    }),
+  });
+  if (!res.ok) {
+    const json = (await res.json()) as { message?: string };
+    throw new Error(json.message || "Tạo quy tắc đại lý thất bại");
   }
 }
 

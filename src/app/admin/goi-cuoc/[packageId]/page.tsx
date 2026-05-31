@@ -14,14 +14,37 @@ import {
 } from "@/lib/admin-pricing";
 import { adminPageHeaderClass, adminTableWrapClass } from "@/lib/admin-utils";
 import { formatVnd } from "@/lib/format";
-import type { Supplier, SupplierPackage } from "@/lib/types";
+import type { Supplier } from "@/lib/types";
+
+type SupplierPriceEditRow = {
+  supplierPriceId: string | null;
+  supplierId: string;
+  costPrice: number;
+};
+
+function mergeSupplierPriceRows(
+  suppliers: Supplier[],
+  priceRows: Array<{ id: string; supplierId: string; costPrice: number }>
+): SupplierPriceEditRow[] {
+  const bySupplier = new Map(priceRows.map((r) => [r.supplierId, r]));
+  return suppliers
+    .filter((s) => s.active)
+    .map((s) => {
+      const existing = bySupplier.get(s.id);
+      return {
+        supplierPriceId: existing?.id ?? null,
+        supplierId: s.id,
+        costPrice: existing?.costPrice ?? 0,
+      };
+    });
+}
 
 export default function AdminSupplierCostDetailPage() {
   const params = useParams<{ packageId: string }>();
   const packageId = params.packageId;
   const [page, setPage] = useState(1);
   const [packageName, setPackageName] = useState("");
-  const [rows, setRows] = useState<SupplierPackage[]>([]);
+  const [rows, setRows] = useState<SupplierPriceEditRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [meta, setMeta] = useState({
     total: 0,
@@ -43,7 +66,16 @@ export default function AdminSupplierCostDetailPage() {
         ]);
         setSuppliers(supplierRows);
         setPackageName(pkg.name);
-        setRows(pricePage.items);
+        setRows(
+          mergeSupplierPriceRows(
+            supplierRows,
+            pricePage.items.map((item) => ({
+              id: item.id,
+              supplierId: item.supplierId,
+              costPrice: item.costPrice,
+            }))
+          )
+        );
         setMeta({
           total: pricePage.total,
           totalPages: pricePage.totalPages,
@@ -64,14 +96,16 @@ export default function AdminSupplierCostDetailPage() {
     void load(page);
   }, [page, load]);
 
-  function updateCost(id: string, costPrice: number) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, costPrice } : r)));
+  function updateCost(supplierId: string, costPrice: number) {
+    setRows((prev) =>
+      prev.map((r) => (r.supplierId === supplierId ? { ...r, costPrice } : r))
+    );
   }
 
   async function save() {
     setSaving(true);
     try {
-      await saveSupplierPriceRows(rows);
+      await saveSupplierPriceRows(packageId, rows);
       toast.success("Đã lưu giá nhập");
       void load(page);
     } catch (e) {
@@ -91,12 +125,14 @@ export default function AdminSupplierCostDetailPage() {
           <h1 className="mt-2 text-2xl font-black">{packageName || "Giá nhập NCC"}</h1>
           <p className="text-sm text-slate-600">
             <code className="text-xs">GET /admin/packages/:id/supplier-prices</code>
+            {" · "}
+            NCC chưa có giá sẽ được tạo mới khi lưu (POST).
           </p>
         </div>
         <button
           type="button"
           className="btn-primary w-full sm:w-auto"
-          disabled={loading || saving}
+          disabled={loading || saving || rows.length === 0}
           onClick={() => void save()}
         >
           {saving ? "Đang lưu…" : "Lưu thay đổi"}
@@ -107,7 +143,7 @@ export default function AdminSupplierCostDetailPage() {
         {loading ? (
           <p className="text-sm text-slate-500">Đang tải…</p>
         ) : rows.length === 0 ? (
-          <p className="text-sm text-slate-500">Chưa có giá nhập NCC cho gói này.</p>
+          <p className="text-sm text-slate-500">Chưa có nhà cung cấp active.</p>
         ) : (
           <table className="min-w-[640px] w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
@@ -118,16 +154,19 @@ export default function AdminSupplierCostDetailPage() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id} className="border-t">
+                <tr key={row.supplierId} className="border-t">
                   <td className="px-3 py-2">
                     {suppliers.find((s) => s.id === row.supplierId)?.name || row.supplierId}
+                    {!row.supplierPriceId ? (
+                      <span className="ml-2 text-xs text-amber-600">(mới)</span>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2">
                     <input
                       type="number"
                       className="w-32 rounded border px-2 py-1"
                       value={row.costPrice}
-                      onChange={(e) => updateCost(row.id, Number(e.target.value))}
+                      onChange={(e) => updateCost(row.supplierId, Number(e.target.value))}
                     />
                     <span className="ml-2 text-xs text-slate-500">
                       {formatVnd(row.costPrice)}

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiRequest, toNextError } from "./client";
-import { requireAdmin } from "./require-admin";
+import { requireStaffOrAdmin, requireAdmin } from "./require-admin";
 
-export async function adminGet(path: string, req?: NextRequest, fallback = "Lỗi tải dữ liệu") {
-  const auth = await requireAdmin();
+export async function adminGet(
+  path: string,
+  req?: NextRequest,
+  fallback = "Lỗi tải dữ liệu",
+  adminOnly = false
+) {
+  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   const qs = req?.nextUrl.searchParams.toString();
   const url = qs ? `${path}?${qs}` : path;
@@ -19,9 +24,10 @@ export async function adminGet(path: string, req?: NextRequest, fallback = "Lỗ
 export async function adminPost(
   path: string,
   body: unknown,
-  fallback = "Tạo thất bại"
+  fallback = "Tạo thất bại",
+  adminOnly = false
 ) {
-  const auth = await requireAdmin();
+  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   try {
     const data = await apiRequest(path, {
@@ -39,9 +45,10 @@ export async function adminPost(
 export async function adminPut(
   path: string,
   body: unknown,
-  fallback = "Cập nhật thất bại"
+  fallback = "Cập nhật thất bại",
+  adminOnly = false
 ) {
-  const auth = await requireAdmin();
+  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   try {
     const data = await apiRequest(path, {
@@ -59,9 +66,10 @@ export async function adminPut(
 export async function adminPostForm(
   path: string,
   formData: FormData,
-  fallback = "Upload thất bại"
+  fallback = "Upload thất bại",
+  adminOnly = true
 ) {
-  const auth = await requireAdmin();
+  const auth = adminOnly ? await requireAdmin() : await requireStaffOrAdmin();
   if ("response" in auth) return auth.response;
   try {
     const data = await apiRequest(path, {

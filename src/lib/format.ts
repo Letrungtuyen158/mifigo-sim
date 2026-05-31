@@ -16,7 +16,9 @@ export function formatPackageType(type: string): string {
 }
 
 export function formatSimType(type: string): string {
-  return type === "esim" ? "eSIM" : "SIM vật lý";
+  if (type === "esim") return "eSIM";
+  if (type === "physical_sim" || type === "physical") return "SIM vật lý";
+  return type;
 }
 
 export function formatDataGb(gb: number | null): string {

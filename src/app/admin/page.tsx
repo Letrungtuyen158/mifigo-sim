@@ -17,6 +17,7 @@ export default async function AdminDashboardPage() {
     supplierCount: 0,
     pendingOrders: 0,
     esimCount: 0,
+    inventoryCount: 0,
     recentOrders: [] as ReturnType<typeof mapOrderFromApi>[],
   };
 
@@ -31,7 +32,7 @@ export default async function AdminDashboardPage() {
   let stats = empty;
 
   try {
-    const [suppliersPage, packages, ordersPending, ordersReview, inventory, recent] =
+    const [suppliersPage, packages, ordersPending, ordersReview, inventory, esimInventory, recent] =
       await Promise.all([
         apiRequest<Paginated<Record<string, unknown>>>(
           "/admin/suppliers?limit=1",
@@ -54,6 +55,10 @@ export default async function AdminDashboardPage() {
           { token }
         ),
         apiRequest<Paginated<Record<string, unknown>>>(
+          "/admin/sim-inventory?simType=esim&limit=1",
+          { token }
+        ),
+        apiRequest<Paginated<Record<string, unknown>>>(
           "/admin/orders?limit=5",
           { token }
         ),
@@ -63,7 +68,8 @@ export default async function AdminDashboardPage() {
       packageCount: packages.total,
       supplierCount: suppliersPage.total,
       pendingOrders: ordersPending.total + ordersReview.total,
-      esimCount: inventory.total,
+      esimCount: esimInventory.total,
+      inventoryCount: inventory.total,
       recentOrders: (recent.items || []).map((o) => mapOrderFromApi(o)),
     };
   } catch {
@@ -79,12 +85,13 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {[
           ["Gói cước", stats.packageCount, "/admin/goi-cuoc"],
           ["Nhà cung cấp", stats.supplierCount, "/admin/nha-cung-cap"],
           ["Đơn chờ xử lý", stats.pendingOrders, "/admin/don-hang"],
-          ["eSIM VN", stats.esimCount, "/admin/esim-vn"],
+          ["Kho SIM/eSIM", stats.inventoryCount, "/admin/kho-sim"],
+          ["eSIM trong kho", stats.esimCount, "/admin/kho-sim?simType=esim"],
         ].map(([label, value, href]) => (
           <Link key={String(label)} href={String(href)} className="card p-5">
             <div className="text-sm text-slate-500">{label}</div>

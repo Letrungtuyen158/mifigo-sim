@@ -296,6 +296,7 @@ export function mapSaleRulesToPricing(
 
   return {
     id: idOf(retail || { _id: `pricing-${packageId}` }),
+    agentRuleId: agent ? idOf(agent) : null,
     packageId,
     retailPrice: Number(retailTiers[0]?.salePrice || 0),
     agentTier1Qty: Number(agentTiers[0]?.minQuantity || 1),
@@ -383,7 +384,11 @@ export function mapVnEsimFromApi(doc: MongoDoc): VnEsim {
     phoneNumber: doc.phoneNumber ? String(doc.phoneNumber) : undefined,
     serial: doc.serialNumber ? String(doc.serialNumber) : undefined,
     qrPayload: doc.qrCodeUrl ? String(doc.qrCodeUrl) : undefined,
-    activationCode: doc.activationCode ? String(doc.activationCode) : undefined,
+    activationCode: doc.activationCode
+      ? String(doc.activationCode)
+      : doc.esimCode
+        ? String(doc.esimCode)
+        : undefined,
     planName: doc.packageId ? String((doc.packageId as MongoDoc).name || "") : undefined,
     status:
       doc.status === "sold"

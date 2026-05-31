@@ -44,7 +44,7 @@ export default function AdminChannelPricingDetailPage() {
     if (!pricing) return;
     setSaving(true);
     try {
-      await saveChannelPricing([pricing]);
+      await saveChannelPricing(pricing);
       toast.success("Đã lưu giá bán kênh");
       void load();
     } catch (e) {

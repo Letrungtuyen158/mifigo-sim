@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
 import { mapVnEsimFromApi } from "@/lib/api/mappers";
+import { isStaffOrAdmin, requireAdmin } from "@/lib/api/require-admin";
 import { getSessionUser } from "@/lib/auth";
 import { ADMIN_LIST_LIMIT } from "@/lib/admin-list";
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = user.role === "admin";
+    const isAdmin = isStaffOrAdmin(user.role);
 
     if (isAdmin) {
       const { searchParams } = req.nextUrl;
@@ -66,11 +67,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
-    const token = await getAccessToken();
-    if (!user || user.role !== "admin" || !token) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
-    }
+    const auth = await requireAdmin();
+    if ("response" in auth) return auth.response;
+    const { token } = auth;
 
     const formData = await request.formData();
     const file = formData.get("file");

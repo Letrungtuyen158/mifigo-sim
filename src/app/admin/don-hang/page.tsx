@@ -535,6 +535,9 @@ export default function AdminOrdersPage() {
                   {(row.sims || []).map((sim, j) => (
                     <div key={j} className="mt-2 space-y-1 font-mono text-xs break-all">
                       {sim.iccid ? <div>ICCID: {String(sim.iccid)}</div> : null}
+                      {sim.esimCode ? (
+                        <div>eSIM code: {String(sim.esimCode)}</div>
+                      ) : null}
                       {sim.activationCode ? (
                         <div>Activation: {String(sim.activationCode)}</div>
                       ) : null}

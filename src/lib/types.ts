@@ -80,7 +80,10 @@ export interface PackagePricingRow {
 }
 
 export interface ChannelPricing {
+  /** MongoDB `_id` of the retail sale-price rule */
   id: string;
+  /** MongoDB `_id` of the agent sale-price rule, if exists */
+  agentRuleId?: string | null;
   packageId: string;
   retailPrice: number;
   agentTier1Qty: number;

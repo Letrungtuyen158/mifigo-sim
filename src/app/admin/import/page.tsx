@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import ExcelFilePicker from "@/components/admin/ExcelFilePicker";
-import { fetchAdminSuppliers } from "@/lib/admin-pricing";
+import { fetchAdminSuppliers, fetchPackageSelectOptions } from "@/lib/admin-pricing";
 import { docId, inputClass, adminTableWrapClass } from "@/lib/admin-utils";
 import {
   ADMIN_LIST_LIMIT,
@@ -38,7 +38,19 @@ const SUPPLIER_PRICE_COLUMNS = [
   "available_quantity",
 ];
 
+const SIM_INVENTORY_ESIM_COLUMNS = [
+  "iccid",
+  "esim_code",
+  "qr_code_url",
+  "activation_code",
+  "smdp_address",
+  "note",
+];
+
+const SIM_INVENTORY_PHYSICAL_COLUMNS = ["iccid", "serial_number", "note"];
+
 export default function AdminImportPage() {
+  const [batchType, setBatchType] = useState<"" | "supplier_price" | "sim_inventory">("");
   const [list, setList] = useState<AdminPaginated<Record<string, unknown>>>({
     items: [],
     total: 0,
@@ -53,30 +65,44 @@ export default function AdminImportPage() {
   const [packageId, setPackageId] = useState("");
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  const [inventoryImporting, setInventoryImporting] = useState(false);
+  const [packageOptions, setPackageOptions] = useState<{ id: string; label: string }[]>([]);
+  const [simType, setSimType] = useState<"esim" | "physical_sim">("esim");
+  const [inventoryPackageId, setInventoryPackageId] = useState("");
+  const [inventorySupplierId, setInventorySupplierId] = useState("");
+  const [inventoryFile, setInventoryFile] = useState<File | null>(null);
 
-  const loadBatches = useCallback(async (p: number) => {
+  const loadBatches = useCallback(async (p: number, type = batchType) => {
     try {
+      const extra = type ? { type } : undefined;
       const data = await fetchAdminPaginated<Record<string, unknown>>(
         "/api/admin/import/batches",
-        p
+        p,
+        ADMIN_LIST_LIMIT,
+        extra
       );
       setList(data);
       setPage(data.page);
     } catch {
       toast.error("Lỗi tải lịch sử import");
     }
-  }, []);
+  }, [batchType]);
 
   useEffect(() => {
-    void loadBatches(page);
-  }, [page, loadBatches]);
+    void loadBatches(page, batchType);
+  }, [page, batchType, loadBatches]);
 
   useEffect(() => {
     setSuppliersLoading(true);
-    void fetchAdminSuppliers()
-      .then((data) => {
+    void Promise.all([fetchAdminSuppliers(), fetchPackageSelectOptions()])
+      .then(([data, pkgOpts]) => {
         setSuppliers(data);
-        if (data[0]) setSupplierId(data[0].id);
+        setPackageOptions(pkgOpts);
+        if (data[0]) {
+          setSupplierId(data[0].id);
+          setInventorySupplierId(data[0].id);
+        }
+        if (pkgOpts[0]) setInventoryPackageId(pkgOpts[0].id);
       })
       .catch(() => toast.error("Lỗi tải NCC"))
       .finally(() => setSuppliersLoading(false));
@@ -132,7 +158,60 @@ export default function AdminImportPage() {
     }
   }
 
+  async function runInventoryImport() {
+    if (!inventoryFile) {
+      toast.error("Vui lòng chọn file Excel.");
+      return;
+    }
+    if (!inventoryPackageId || !inventorySupplierId) {
+      toast.error("Vui lòng chọn gói cước và nhà cung cấp.");
+      return;
+    }
+
+    setInventoryImporting(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", inventoryFile);
+      fd.set("simType", simType);
+      fd.set("packageId", inventoryPackageId);
+      fd.set("supplierId", inventorySupplierId);
+
+      const res = await fetch("/api/admin/import/sim-inventory", {
+        method: "POST",
+        body: fd,
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        data?: { successRows?: number; failedRows?: number };
+        message?: string;
+      };
+
+      if (!res.ok) {
+        toast.error(json.message || "Import thất bại");
+        return;
+      }
+
+      const ok = json.data?.successRows ?? 0;
+      const failed = json.data?.failedRows ?? 0;
+      toast.success(
+        failed > 0 ? `Import kho: ${ok} dòng OK, ${failed} lỗi` : `Import kho: ${ok} dòng OK`
+      );
+
+      setInventoryFile(null);
+      setPage(1);
+      void loadBatches(1);
+    } catch {
+      toast.error("Import kho thất bại");
+    } finally {
+      setInventoryImporting(false);
+    }
+  }
+
   const canImport = Boolean(supplierId) && !suppliersLoading && !importing;
+  const canInventoryImport =
+    Boolean(inventoryPackageId && inventorySupplierId) &&
+    !suppliersLoading &&
+    !inventoryImporting;
 
   return (
     <div className="space-y-6">
@@ -209,8 +288,102 @@ export default function AdminImportPage() {
         </button>
       </div>
 
+      <div className="card space-y-4 p-5">
+        <div>
+          <h2 className="font-bold">Import kho SIM/eSIM (Excel)</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            <code className="text-xs">POST /admin/import/sim-inventory</code>
+            {" · "}
+            Cột eSIM: {SIM_INVENTORY_ESIM_COLUMNS.join(" · ")} · Cột SIM vật lý:{" "}
+            {SIM_INVENTORY_PHYSICAL_COLUMNS.join(" · ")}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="mb-1 block font-semibold text-slate-700">Loại SIM</span>
+            <select
+              className={inputClass}
+              value={simType}
+              disabled={inventoryImporting}
+              onChange={(e) => setSimType(e.target.value as "esim" | "physical_sim")}
+            >
+              <option value="esim">eSIM</option>
+              <option value="physical_sim">SIM vật lý</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-semibold text-slate-700">Gói cước</span>
+            <select
+              className={inputClass}
+              value={inventoryPackageId}
+              disabled={inventoryImporting || packageOptions.length === 0}
+              onChange={(e) => setInventoryPackageId(e.target.value)}
+            >
+              {packageOptions.length === 0 ? (
+                <option value="">Chưa có gói</option>
+              ) : (
+                packageOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+          <label className="block text-sm sm:col-span-2">
+            <span className="mb-1 block font-semibold text-slate-700">Nhà cung cấp</span>
+            <select
+              className={inputClass}
+              value={inventorySupplierId}
+              disabled={inventoryImporting || suppliersLoading}
+              onChange={(e) => setInventorySupplierId(e.target.value)}
+            >
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.code})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <ExcelFilePicker
+          file={inventoryFile}
+          disabled={!canInventoryImport && !inventoryFile}
+          onChange={setInventoryFile}
+          label="File Excel kho *"
+          buttonLabel="Chọn file Excel"
+          hint="Kéo thả hoặc bấm để chọn (.xlsx, .xls)"
+          removeLabel="Xóa file"
+        />
+
+        <button
+          type="button"
+          className="btn-primary w-full sm:w-auto"
+          disabled={!canInventoryImport || !inventoryFile}
+          onClick={() => void runInventoryImport()}
+        >
+          {inventoryImporting ? "Đang import…" : "Import kho SIM/eSIM"}
+        </button>
+      </div>
+
       <div className={`card ${adminTableWrapClass} p-4`}>
-        <h2 className="mb-3 font-bold">Lịch sử import</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-bold">Lịch sử import</h2>
+          <select
+            className="rounded-lg border px-2 py-1 text-sm"
+            value={batchType}
+            onChange={(e) => {
+              setBatchType(e.target.value as "" | "supplier_price" | "sim_inventory");
+              setPage(1);
+            }}
+          >
+            <option value="">Tất cả loại</option>
+            <option value="supplier_price">Giá NCC</option>
+            <option value="sim_inventory">Kho SIM/eSIM</option>
+          </select>
+        </div>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>

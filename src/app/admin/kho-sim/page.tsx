@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, adminTableWrapClass } from "@/lib/admin-utils";
 import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
+import { formatSimType } from "@/lib/format";
 
 const LOW_STOCK_THRESHOLD = 10;
 
@@ -95,7 +96,7 @@ export default function AdminSimInventoryPage() {
             lowStockItems.map((row, i) => (
               <li key={i} className="admin-break-text">
                 Package {String((row._id as Record<string, unknown>)?.packageId || "?")} ·{" "}
-                {String((row._id as Record<string, unknown>)?.simType || "")} · còn{" "}
+                {formatSimType(String((row._id as Record<string, unknown>)?.simType || ""))} · còn{" "}
                 {String(row.count)}
               </li>
             ))
@@ -127,7 +128,7 @@ export default function AdminSimInventoryPage() {
                 <td className="py-2 font-mono text-xs">
                   {String(row.iccid || row.serialNumber || "—")}
                 </td>
-                <td>{String(row.simType || "")}</td>
+                <td>{formatSimType(String(row.simType || ""))}</td>
                 <td>{String(row.status || "")}</td>
               </tr>
             ))}

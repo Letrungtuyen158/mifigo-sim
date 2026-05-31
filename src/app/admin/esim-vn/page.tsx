@@ -63,8 +63,8 @@ export default function AdminEsimVnPage() {
       <div>
         <h1 className="text-2xl font-black">Import eSIM Việt Nam</h1>
         <p className="text-sm text-slate-600">
-          Upload file Excel (.xlsx). Cột gợi ý: ICCID, Phone, Serial, QR, Activation Code, Plan,
-          Notes.
+          Upload file Excel (.xlsx). Cột bắt buộc: <strong>iccid</strong>, <strong>esim_code</strong>.
+          Tùy chọn: qr_code_url, activation_code, smdp_address, note.
         </p>
       </div>
 

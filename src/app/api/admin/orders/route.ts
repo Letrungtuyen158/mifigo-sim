@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
-import {
-  mapOrderFromApi,
-  mapOrderStatusToApi,
-} from "@/lib/api/mappers";
-import { getSessionUser } from "@/lib/auth";
+import { mapOrderFromApi, mapOrderStatusToApi } from "@/lib/api/mappers";
+import { requireStaffOrAdmin } from "@/lib/api/require-admin";
 import { adminGet } from "@/lib/api/admin-route";
 
 export async function GET(req: NextRequest) {
@@ -14,11 +11,9 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await getSessionUser();
-    const token = await getAccessToken();
-    if (!user || user.role !== "admin" || !token) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
-    }
+    const auth = await requireStaffOrAdmin();
+    if ("response" in auth) return auth.response;
+    const { token } = auth;
 
     const body = (await request.json()) as {
       orderId?: string;

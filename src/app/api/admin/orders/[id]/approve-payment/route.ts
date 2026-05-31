@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
-import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
 import { mapOrderFromApi } from "@/lib/api/mappers";
-import { getSessionUser } from "@/lib/auth";
+import { requireStaffOrAdmin } from "@/lib/api/require-admin";
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getSessionUser();
-    const token = await getAccessToken();
-    if (!user || user.role !== "admin" || !token) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
-    }
+    const auth = await requireStaffOrAdmin();
+    if ("response" in auth) return auth.response;
+    const { token } = auth;
 
     const { id } = await params;
     const result = await apiRequest<{
