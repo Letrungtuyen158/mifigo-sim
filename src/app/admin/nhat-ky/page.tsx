@@ -1,16 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
 export default function AdminActivityLogsPage() {
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
+
+  async function load(p = page) {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/activity-logs",
+        p
+      );
+      setItems(data.items);
+      setMeta({
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
+      });
+      setPage(data.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải nhật ký");
+    }
+  }
 
   useEffect(() => {
-    void fetch("/api/admin/activity-logs?limit=50")
-      .then((r) => r.json())
-      .then((d) => setItems(d.data?.items || []));
-  }, []);
+    void load(page);
+  }, [page]);
 
   return (
     <div className="space-y-4">
@@ -39,6 +61,13 @@ export default function AdminActivityLogsPage() {
             })}
           </tbody>
         </table>
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

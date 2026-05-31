@@ -1,31 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminArray, normalizePaginated } from "@/lib/admin-list";
 
 export default function AdminImportPage() {
-  const [batches, setBatches] = useState<Record<string, unknown>[]>([]);
+  const [allBatches, setAllBatches] = useState<Record<string, unknown>[]>([]);
+  const [page, setPage] = useState(1);
   const [suppliers, setSuppliers] = useState<Record<string, unknown>[]>([]);
   const [supplierId, setSupplierId] = useState("");
   const [packageId, setPackageId] = useState("");
 
-  const loadBatches = useCallback(() => {
-    void fetch("/api/admin/import/batches")
-      .then((r) => r.json())
-      .then((d) => setBatches(Array.isArray(d.data) ? d.data : []));
-  }, []);
+  const list = useMemo(
+    () => normalizePaginated<Record<string, unknown>>(allBatches, page, ADMIN_LIST_LIMIT),
+    [allBatches, page]
+  );
 
   useEffect(() => {
-    loadBatches();
-    void fetch("/api/admin/suppliers")
-      .then((r) => r.json())
-      .then((d) => {
-        const list = Array.isArray(d.data) ? d.data : [];
-        setSuppliers(list);
-        if (list[0]) setSupplierId(docId(list[0]));
+    void fetchAdminArray<Record<string, unknown>>("/api/admin/import/batches")
+      .then(setAllBatches)
+      .catch(() => toast.error("Lỗi tải lịch sử import"));
+    void fetchAdminArray<Record<string, unknown>>("/api/admin/suppliers")
+      .then((data) => {
+        setSuppliers(data);
+        if (data[0]) setSupplierId(docId(data[0]));
       });
-  }, [loadBatches]);
+  }, []);
 
   async function importPrices(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -38,7 +40,8 @@ export default function AdminImportPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.message || "Import thất bại");
     toast.success(`Import xong: ${data.data?.successRows ?? 0} dòng OK`);
-    loadBatches();
+    setAllBatches(await fetchAdminArray<Record<string, unknown>>("/api/admin/import/batches"));
+    setPage(1);
     e.target.value = "";
   }
 
@@ -59,6 +62,7 @@ export default function AdminImportPage() {
 
       <div className="card overflow-x-auto p-4">
         <h2 className="mb-3 font-bold">Lịch sử import</h2>
+        <p className="mb-2 text-xs text-slate-500">BE trả tối đa 50 batch gần nhất.</p>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>
@@ -70,7 +74,7 @@ export default function AdminImportPage() {
             </tr>
           </thead>
           <tbody>
-            {batches.map((b) => (
+            {list.items.map((b) => (
               <tr key={docId(b)} className="border-t">
                 <td className="py-2">{String(b.fileName)}</td>
                 <td>{String(b.type)}</td>
@@ -81,6 +85,13 @@ export default function AdminImportPage() {
             ))}
           </tbody>
         </table>
+        <AdminPagination
+          page={list.page}
+          limit={list.limit}
+          total={list.total}
+          totalPages={list.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

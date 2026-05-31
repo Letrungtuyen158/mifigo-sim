@@ -1,25 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
 export default function AdminSimInventoryPage() {
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
   const [lowStock, setLowStock] = useState<Record<string, unknown>[]>([]);
 
-  const load = useCallback(() => {
-    void Promise.all([
-      fetch("/api/admin/sim-inventory?limit=50").then((r) => r.json()),
-      fetch("/api/admin/sim-inventory/low-stock?threshold=10").then((r) => r.json()),
-    ]).then(([inv, low]) => {
-      setItems(inv.data?.items || []);
+  async function load(p = page) {
+    try {
+      const [inv, low] = await Promise.all([
+        fetchAdminPaginated<Record<string, unknown>>("/api/admin/sim-inventory", p),
+        fetch("/api/admin/sim-inventory/low-stock?threshold=10").then((r) => r.json()),
+      ]);
+      setItems(inv.items);
+      setMeta({
+        total: inv.total,
+        totalPages: inv.totalPages,
+        limit: inv.limit,
+        page: inv.page,
+      });
+      setPage(inv.page);
       setLowStock(Array.isArray(low.data) ? low.data : []);
-    });
-  }, []);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải kho");
+    }
+  }
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void load(page);
+  }, [page]);
 
   return (
     <div className="space-y-6">
@@ -33,8 +48,8 @@ export default function AdminSimInventoryPage() {
           ) : (
             lowStock.map((row, i) => (
               <li key={i}>
-                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} ·{" "}
-                {String((row._id as Record<string, unknown>)?.simType || "")} · còn {String(row.count)}
+                Package {String((row._id as Record<string, unknown>)?.packageId || "?")} · còn{" "}
+                {String(row.count)}
               </li>
             ))
           )}
@@ -42,7 +57,6 @@ export default function AdminSimInventoryPage() {
       </div>
 
       <div className="card overflow-x-auto p-4">
-        <h2 className="mb-3 font-bold">Tồn kho (50 mới nhất)</h2>
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>
@@ -61,6 +75,13 @@ export default function AdminSimInventoryPage() {
             ))}
           </tbody>
         </table>
+        <AdminPagination
+          page={meta.page}
+          limit={meta.limit}
+          total={meta.total}
+          totalPages={meta.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

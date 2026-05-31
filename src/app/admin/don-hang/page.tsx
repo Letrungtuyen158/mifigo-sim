@@ -2,21 +2,44 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
+import { mapOrderFromApi } from "@/lib/api/mappers";
+import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 import { formatOrderStatus, formatVnd } from "@/lib/format";
 import type { Order } from "@/lib/types";
 
 export default function AdminOrdersPage() {
+  const [page, setPage] = useState(1);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: ADMIN_LIST_LIMIT,
+    page: 1,
+  });
 
-  async function load() {
-    const res = await fetch("/api/admin/store");
-    const data = await res.json();
-    setOrders(data.data.orders || []);
+  async function load(p = page) {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/orders",
+        p
+      );
+      setOrders(data.items.map((o) => mapOrderFromApi(o)));
+      setMeta({
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
+      });
+      setPage(data.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải đơn");
+    }
   }
 
   useEffect(() => {
-    void load();
-  }, []);
+    void load(page);
+  }, [page]);
 
   async function issueInvoice(orderId: string) {
     const res = await fetch(`/api/admin/orders/${orderId}/invoice`, { method: "POST" });
@@ -36,7 +59,7 @@ export default function AdminOrdersPage() {
       return;
     }
     toast.success("Đã cập nhật đơn");
-    void load();
+    void load(page);
   }
 
   return (
@@ -105,6 +128,14 @@ export default function AdminOrdersPage() {
           <div className="card p-6 text-slate-500">Chưa có đơn hàng.</div>
         )}
       </div>
+
+      <AdminPagination
+        page={meta.page}
+        limit={meta.limit}
+        total={meta.total}
+        totalPages={meta.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

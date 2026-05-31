@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminPaginated, type AdminPaginated } from "@/lib/admin-list";
 
 type UserRow = Record<string, unknown>;
 
@@ -10,7 +12,14 @@ const ROLES = ["customer", "agent", "collaborator", "staff", "admin"] as const;
 const STATUSES = ["active", "inactive", "blocked"] as const;
 
 export default function AdminUsersPage() {
-  const [items, setItems] = useState<UserRow[]>([]);
+  const [list, setList] = useState<AdminPaginated<UserRow>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: ADMIN_LIST_LIMIT,
+    totalPages: 1,
+  });
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -19,15 +28,19 @@ export default function AdminUsersPage() {
     role: "customer",
   });
 
-  const load = useCallback(() => {
-    void fetch("/api/admin/users?limit=50")
-      .then((r) => r.json())
-      .then((d) => setItems(d.data?.items || d.data || []));
-  }, []);
+  const load = useCallback(async (p = page) => {
+    try {
+      const data = await fetchAdminPaginated<UserRow>("/api/admin/users", p);
+      setList(data);
+      setPage(data.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải dữ liệu");
+    }
+  }, [page]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void load(page);
+  }, [page]);
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +53,7 @@ export default function AdminUsersPage() {
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo người dùng");
     setForm({ fullName: "", email: "", password: "", phone: "", role: "customer" });
-    load();
+    void load(1);
   }
 
   async function updateUser(id: string, patch: Record<string, unknown>) {
@@ -55,7 +68,7 @@ export default function AdminUsersPage() {
       return;
     }
     toast.success("Đã lưu");
-    load();
+    void load(page);
   }
 
   return (
@@ -76,11 +89,11 @@ export default function AdminUsersPage() {
         <button type="submit" className="btn-primary sm:col-span-2">Tạo user</button>
       </form>
 
-      <div className="space-y-3">
-        {items.map((u) => {
+      <div className="card space-y-3 p-4">
+        {list.items.map((u) => {
           const id = docId(u);
           return (
-            <div key={id} className="card grid gap-2 p-4 sm:grid-cols-4">
+            <div key={id} className="grid gap-2 border-b border-slate-100 pb-3 last:border-0 sm:grid-cols-4">
               <div className="font-semibold">{String(u.fullName || "")}</div>
               <div className="text-sm text-slate-600">{String(u.email || "")}</div>
               <select
@@ -104,6 +117,13 @@ export default function AdminUsersPage() {
             </div>
           );
         })}
+        <AdminPagination
+          page={list.page}
+          limit={list.limit}
+          total={list.total}
+          totalPages={list.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

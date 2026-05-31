@@ -1,0 +1,75 @@
+/** Matches BE `PaginationDto`: default page=1, limit=20, max limit=100 */
+export const ADMIN_LIST_LIMIT = 20;
+
+export interface AdminPaginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function buildAdminListQuery(
+  page: number,
+  limit = ADMIN_LIST_LIMIT,
+  extra?: Record<string, string | number | undefined>
+) {
+  const params = new URLSearchParams({
+    page: String(Math.max(1, page)),
+    limit: String(Math.min(100, Math.max(1, limit))),
+  });
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value !== undefined && value !== "") {
+        params.set(key, String(value));
+      }
+    }
+  }
+  return params.toString();
+}
+
+export function normalizePaginated<T>(data: unknown, page: number, limit: number): AdminPaginated<T> {
+  if (Array.isArray(data)) {
+    const total = data.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const start = (page - 1) * limit;
+    return {
+      items: data.slice(start, start + limit) as T[],
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+  const p = data as Record<string, unknown>;
+  const items = (p.items as T[] | undefined) ?? [];
+  return {
+    items,
+    total: Number(p.total ?? items.length),
+    page: Number(p.page ?? page),
+    limit: Number(p.limit ?? limit),
+    totalPages: Number(p.totalPages ?? 1),
+  };
+}
+
+export async function fetchAdminPaginated<T>(
+  apiPath: string,
+  page: number,
+  limit = ADMIN_LIST_LIMIT,
+  extra?: Record<string, string | number | undefined>
+): Promise<AdminPaginated<T>> {
+  const qs = buildAdminListQuery(page, limit, extra);
+  const res = await fetch(`${apiPath}?${qs}`);
+  const json = (await res.json()) as { success?: boolean; data?: unknown; message?: string };
+  if (!res.ok) {
+    throw new Error(typeof json.message === "string" ? json.message : "Lỗi tải dữ liệu");
+  }
+  return normalizePaginated<T>(json.data, page, limit);
+}
+
+/** BE returns full array (no page/limit) — paginate on client after one fetch */
+export async function fetchAdminArray<T>(apiPath: string): Promise<T[]> {
+  const res = await fetch(apiPath);
+  const json = (await res.json()) as { data?: unknown };
+  return Array.isArray(json.data) ? (json.data as T[]) : [];
+}

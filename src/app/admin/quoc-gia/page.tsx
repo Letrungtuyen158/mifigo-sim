@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminArray, normalizePaginated } from "@/lib/admin-list";
 
 export default function AdminCountriesPage() {
-  const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [allItems, setAllItems] = useState<Record<string, unknown>[]>([]);
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState({
     name: "",
     nameVi: "",
@@ -16,15 +19,16 @@ export default function AdminCountriesPage() {
     isActive: true,
   });
 
-  const load = useCallback(() => {
-    void fetch("/api/admin/countries")
-      .then((r) => r.json())
-      .then((d) => setItems(Array.isArray(d.data) ? d.data : []));
-  }, []);
+  const list = useMemo(
+    () => normalizePaginated<Record<string, unknown>>(allItems, page, ADMIN_LIST_LIMIT),
+    [allItems, page]
+  );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void fetchAdminArray<Record<string, unknown>>("/api/admin/countries")
+      .then(setAllItems)
+      .catch(() => toast.error("Lỗi tải quốc gia"));
+  }, []);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -36,7 +40,8 @@ export default function AdminCountriesPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo quốc gia");
-    load();
+    setAllItems(await fetchAdminArray<Record<string, unknown>>("/api/admin/countries"));
+    setPage(1);
   }
 
   async function update(id: string, patch: Record<string, unknown>) {
@@ -47,12 +52,13 @@ export default function AdminCountriesPage() {
     });
     if (!res.ok) return toast.error("Lưu thất bại");
     toast.success("Đã lưu");
-    load();
+    setAllItems(await fetchAdminArray<Record<string, unknown>>("/api/admin/countries"));
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black">Quốc gia</h1>
+      <p className="text-xs text-slate-500">API BE trả về full list — phân trang hiển thị phía FE.</p>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <input className={inputClass} placeholder="Tên EN" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={inputClass} placeholder="Tên VI" value={form.nameVi} required onChange={(e) => setForm({ ...form, nameVi: e.target.value })} />
@@ -65,7 +71,7 @@ export default function AdminCountriesPage() {
         </label>
         <button type="submit" className="btn-primary sm:col-span-2">Thêm quốc gia</button>
       </form>
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto p-4">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left">
             <tr>
@@ -77,7 +83,7 @@ export default function AdminCountriesPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((c) => {
+            {list.items.map((c) => {
               const id = docId(c);
               return (
                 <tr key={id} className="border-t">
@@ -95,6 +101,13 @@ export default function AdminCountriesPage() {
             })}
           </tbody>
         </table>
+        <AdminPagination
+          page={list.page}
+          limit={list.limit}
+          total={list.total}
+          totalPages={list.totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

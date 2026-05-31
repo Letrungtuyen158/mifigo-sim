@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { docId, inputClass } from "@/lib/admin-utils";
+import { ADMIN_LIST_LIMIT, fetchAdminPaginated } from "@/lib/admin-list";
 
 const SIM_TYPES = ["esim", "physical_sim"] as const;
 const PKG_TYPES = ["data_only", "data_call", "unlimited", "daily_data"] as const;
 const STATUSES = ["active", "inactive", "draft"] as const;
 
 export default function AdminPackagesPage() {
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: ADMIN_LIST_LIMIT, page: 1 });
   const [countryIds, setCountryIds] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -21,15 +25,28 @@ export default function AdminPackagesPage() {
     status: "active",
   });
 
-  const load = useCallback(() => {
-    void fetch("/api/admin/packages?limit=100")
-      .then((r) => r.json())
-      .then((d) => setItems(d.data?.items || []));
-  }, []);
+  async function load(p = page) {
+    try {
+      const data = await fetchAdminPaginated<Record<string, unknown>>(
+        "/api/admin/packages",
+        p
+      );
+      setItems(data.items);
+      setMeta({
+        total: data.total,
+        totalPages: data.totalPages,
+        limit: data.limit,
+        page: data.page,
+      });
+      setPage(data.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải gói");
+    }
+  }
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void load(page);
+  }, [page]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +60,7 @@ export default function AdminPackagesPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.message || "Tạo thất bại");
     toast.success("Đã tạo gói");
-    load();
+    void load(1);
   }
 
   async function update(id: string, patch: Record<string, unknown>) {
@@ -54,7 +71,7 @@ export default function AdminPackagesPage() {
     });
     if (!res.ok) return toast.error("Lưu thất bại");
     toast.success("Đã lưu");
-    load();
+    void load(page);
   }
 
   return (
@@ -92,11 +109,17 @@ export default function AdminPackagesPage() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              <a href={`/admin/so-sanh?pkg=${id}`} className="text-sm font-semibold text-[#1d6be8]">NCC / best</a>
             </div>
           );
         })}
       </div>
+      <AdminPagination
+        page={meta.page}
+        limit={meta.limit}
+        total={meta.total}
+        totalPages={meta.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

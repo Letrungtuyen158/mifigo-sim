@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/api/auth-token";
 import { apiRequest, toNextError } from "@/lib/api/client";
 import {
@@ -6,6 +6,11 @@ import {
   mapOrderStatusToApi,
 } from "@/lib/api/mappers";
 import { getSessionUser } from "@/lib/auth";
+import { adminGet } from "@/lib/api/admin-route";
+
+export async function GET(req: NextRequest) {
+  return adminGet("/admin/orders", req);
+}
 
 export async function PATCH(request: Request) {
   try {
