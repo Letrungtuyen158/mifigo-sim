@@ -1,24 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { fetchAdminSuppliers, fetchSupplierPriceRows } from "@/lib/admin-pricing";
 import { formatDataGb, formatSimType, formatVnd } from "@/lib/format";
-import type { SupplierPackage } from "@/lib/types";
+import type { Supplier, SupplierPackage } from "@/lib/types";
 
 export default function AdminComparePage() {
   const [packages, setPackages] = useState<SupplierPackage[]>([]);
-  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [country, setCountry] = useState("");
   const [apiBest, setApiBest] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [supplierRows, priceRows] = await Promise.all([
+        fetchAdminSuppliers(),
+        fetchSupplierPriceRows(),
+      ]);
+      setSuppliers(supplierRows);
+      setPackages(priceRows);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Lỗi tải dữ liệu so sánh");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    void fetch("/api/admin/store")
-      .then((r) => r.json())
-      .then((d) => {
-        setPackages(d.data.packages || []);
-        setSuppliers(d.data.suppliers || []);
-      });
-  }, []);
+    void load();
+  }, [load]);
 
   const countries = useMemo(
     () => [...new Set(packages.map((p) => p.country))],
@@ -69,9 +82,10 @@ export default function AdminComparePage() {
       </div>
 
       <select
-        className="rounded-xl border px-3 py-2 text-sm"
+        className="w-full max-w-md rounded-xl border px-3 py-2 text-sm sm:w-auto"
         value={country}
         onChange={(e) => setCountry(e.target.value)}
+        disabled={loading}
       >
         <option value="">Tất cả quốc gia</option>
         {countries.map((c) => (
@@ -81,8 +95,12 @@ export default function AdminComparePage() {
         ))}
       </select>
 
+      {loading ? (
+        <p className="text-sm text-slate-500">Đang tải…</p>
+      ) : null}
+
       {apiBest?.bestSupplier ? (
-        <div className="card bg-blue-50 p-4 text-sm">
+        <div className="card bg-blue-50 p-4 text-sm admin-break-text">
           <strong>API best-supplier:</strong>{" "}
           {String((apiBest.bestSupplier as Record<string, unknown>).supplierName)} — cost{" "}
           {formatVnd(Number((apiBest.bestSupplier as Record<string, unknown>).costPrice))} — sale{" "}

@@ -1,42 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import type { Supplier, SupplierPackage } from "@/lib/types";
+import { fetchAdminSuppliers, fetchPackageSelectOptions } from "@/lib/admin-pricing";
+import type { Supplier } from "@/lib/types";
 
 export default function AdminEsimVnPage() {
   const [importing, setImporting] = useState(false);
-  const [packages, setPackages] = useState<SupplierPackage[]>([]);
+  const [packageOptions, setPackageOptions] = useState<{ id: string; label: string }[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [packageId, setPackageId] = useState("");
   const [supplierId, setSupplierId] = useState("");
 
   useEffect(() => {
-    void fetch("/api/admin/store")
-      .then((r) => r.json())
-      .then((d) => {
-        const pkgList: SupplierPackage[] = d.data?.packages || [];
-        const supplierList: Supplier[] = d.data?.suppliers || [];
-        setPackages(pkgList);
+    void Promise.all([fetchPackageSelectOptions(), fetchAdminSuppliers()])
+      .then(([pkgOpts, supplierList]) => {
+        setPackageOptions(pkgOpts);
         setSuppliers(supplierList);
-        if (pkgList.length > 0) {
-          setPackageId(pkgList[0].packageMongoId || "");
-          setSupplierId(pkgList[0].supplierId || "");
-        } else if (supplierList.length > 0) {
-          setSupplierId(supplierList[0].id);
-        }
-      });
+        if (pkgOpts.length > 0) setPackageId(pkgOpts[0].id);
+        if (supplierList.length > 0) setSupplierId(supplierList[0].id);
+      })
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : "Lỗi tải danh sách gói/NCC")
+      );
   }, []);
-
-  const packageOptions = useMemo(() => {
-    const seen = new Set<string>();
-    return packages.flatMap((p) => {
-      const mongoId = p.packageMongoId;
-      if (!mongoId || seen.has(mongoId)) return [];
-      seen.add(mongoId);
-      return [{ id: mongoId, label: `${p.name} · ${p.country}` }];
-    });
-  }, [packages]);
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
