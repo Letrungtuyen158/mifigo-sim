@@ -122,12 +122,20 @@ export function mapBackendUser(
   };
 }
 
-function firstCountryName(pkg: MongoDoc): string {
+function countryNamesFromPackage(pkg: MongoDoc): string[] {
   const countries = pkg.countryIds as MongoDoc[] | undefined;
-  if (Array.isArray(countries) && countries.length > 0) {
-    const c = countries[0];
-    return String(c.nameVi || c.name || "");
-  }
+  if (!Array.isArray(countries) || countries.length === 0) return [];
+  return countries
+    .map((c) => {
+      if (typeof c === "string") return "";
+      return String(c.nameVi || c.name || "").trim();
+    })
+    .filter(Boolean);
+}
+
+function firstCountryName(pkg: MongoDoc): string {
+  const names = countryNamesFromPackage(pkg);
+  if (names.length > 0) return names[0];
   return String(pkg.regionName || "");
 }
 
@@ -144,11 +152,13 @@ export function mapPackageFromApi(
   supplierId?: string,
   costPrice = 0
 ): SupplierPackage {
+  const countryNames = countryNamesFromPackage(pkg);
   return {
     id: idOf(pkg),
     supplierId: supplierId || "",
     country: firstCountryName(pkg),
     countryCode: firstCountryCode(pkg),
+    countryLabel: countryNames.join(", "),
     region: String(pkg.regionName || ""),
     name: String(pkg.name || ""),
     packageType: mapPackageTypeFromApi(String(pkg.packageType || "")),
@@ -251,6 +261,7 @@ export function mapAdminPackageListItem(item: MongoDoc): PackagePricingRow {
 /** Admin list item từ GET /admin/packages — unwrap `package` nested object */
 export function mapSystemPackageRow(item: MongoDoc) {
   const pkg = (item.package || item) as MongoDoc;
+  const countryNames = countryNamesFromPackage(pkg);
   return {
     id: idOf(pkg),
     name: String(pkg.name || ""),
@@ -263,6 +274,8 @@ export function mapSystemPackageRow(item: MongoDoc) {
       pkg.dataAmountGb != null && pkg.dataAmountGb !== ""
         ? Number(pkg.dataAmountGb)
         : null,
+    countryNames,
+    countryLabel: countryNames.join(", "),
   };
 }
 

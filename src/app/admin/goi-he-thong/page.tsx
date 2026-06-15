@@ -294,6 +294,10 @@ export default function AdminPackagesPage() {
               <div className="min-w-0 flex-1">
                 <div className="font-bold">{p.name}</div>
                 <div className="text-xs text-slate-500">
+                  {p.countryLabel ? (
+                    <span className="font-semibold text-slate-700">{p.countryLabel}</span>
+                  ) : null}
+                  {p.countryLabel ? " · " : null}
                   {p.slug} · {formatSimType(p.simType)} · {formatApiPackageType(p.packageType)} ·{" "}
                   {formatDataGb(p.dataAmountGb)} / {p.durationDays} ngày
                 </div>

@@ -52,6 +52,8 @@ export interface SupplierPackage {
   supplierId: string;
   country: string;
   countryCode: string;
+  /** Tên quốc gia tiếng Việt (tất cả, nối bằng dấu phẩy) */
+  countryLabel?: string;
   region: string;
   name: string;
   packageType: PackageType;

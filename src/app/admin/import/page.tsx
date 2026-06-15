@@ -505,7 +505,7 @@ function AdminImportContent() {
           {importing ? "Đang import…" : "Import Excel"}
         </button>
       </div>
-
+{/* 
       <div className="card space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -585,7 +585,7 @@ function AdminImportContent() {
         >
           {inventoryImporting ? "Đang import…" : "Import kho SIM/eSIM"}
         </button>
-      </div>
+      </div> */}
 
       <div className={`card ${adminTableWrapClass} p-4`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

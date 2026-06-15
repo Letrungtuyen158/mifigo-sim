@@ -72,6 +72,11 @@ export default function PackageResultList({
             </h3>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
+              {item.package.countryLabel || item.package.country ? (
+                <span className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800">
+                  {item.package.countryLabel || item.package.country}
+                </span>
+              ) : null}
               <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
                 {tDataGb(locale, item.package.dataGb)}
               </span>
@@ -82,12 +87,6 @@ export default function PackageResultList({
                 {item.supplier.name}
               </span>
             </div>
-
-            {role === "admin" ? (
-              <p className="mt-2 text-xs text-amber-700">
-                {t("search.costPrice")}: {formatVnd(item.package.costPrice)}
-              </p>
-            ) : null}
 
             {role === "agent" && item.priceTiers ? (
               <div className="mt-2 rounded-lg bg-blue-50 p-2 text-[10px] text-blue-900">
