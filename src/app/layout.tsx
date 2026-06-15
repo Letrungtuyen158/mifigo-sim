@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/Providers";
 import SeoScripts from "@/components/SeoScripts";
 import Footer from "@/components/layout/Footer";
@@ -36,6 +37,7 @@ export default async function RootLayout({
           </div>
           <Toaster position="top-right" />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
