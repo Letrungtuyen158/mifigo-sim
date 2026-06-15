@@ -155,20 +155,26 @@ export default function AdminPackagesPage() {
       <AdminWriteGate>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 font-bold">Tạo gói mới</h2>
-        <input
-          className={inputClass}
-          placeholder="Tên gói"
-          value={form.name}
-          required
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-        <input
-          className={inputClass}
-          placeholder="Slug"
-          value={form.slug}
-          required
-          onChange={(e) => setForm({ ...form, slug: e.target.value })}
-        />
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Tên gói</span>
+          <input
+            className={inputClass}
+            placeholder="VD: eSIM Nhật 5GB 7 ngày"
+            value={form.name}
+            required
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Slug</span>
+          <input
+            className={inputClass}
+            placeholder="VD: esim-nhat-5gb-7-ngay"
+            value={form.slug}
+            required
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+        </label>
         <div className="sm:col-span-2">
           <span className="mb-1 block text-xs font-bold text-slate-600">Quốc gia (chọn từ danh sách)</span>
           <CountryMultiSelect
@@ -177,42 +183,57 @@ export default function AdminPackagesPage() {
             onChange={setSelectedCountryIds}
           />
         </div>
-        <select
-          className={inputClass}
-          value={form.simType}
-          onChange={(e) => setForm({ ...form, simType: e.target.value })}
-        >
-          {SIM_TYPES.map((s) => (
-            <option key={s} value={s}>
-              {formatSimType(s)}
-            </option>
-          ))}
-        </select>
-        <select
-          className={inputClass}
-          value={form.packageType}
-          onChange={(e) => setForm({ ...form, packageType: e.target.value })}
-        >
-          {PKG_TYPES.map((p) => (
-            <option key={p} value={p}>
-              {formatApiPackageType(p)}
-            </option>
-          ))}
-        </select>
-        <input
-          className={inputClass}
-          type="number"
-          placeholder="Số ngày"
-          value={form.durationDays}
-          onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
-        />
-        <input
-          className={inputClass}
-          type="number"
-          placeholder="GB"
-          value={form.dataAmountGb}
-          onChange={(e) => setForm({ ...form, dataAmountGb: Number(e.target.value) })}
-        />
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Loại SIM</span>
+          <select
+            className={inputClass}
+            value={form.simType}
+            onChange={(e) => setForm({ ...form, simType: e.target.value })}
+          >
+            {SIM_TYPES.map((s) => (
+              <option key={s} value={s}>
+                {formatSimType(s)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Loại gói cước</span>
+          <select
+            className={inputClass}
+            value={form.packageType}
+            onChange={(e) => setForm({ ...form, packageType: e.target.value })}
+          >
+            {PKG_TYPES.map((p) => (
+              <option key={p} value={p}>
+                {formatApiPackageType(p)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Số ngày</span>
+          <input
+            className={inputClass}
+            type="number"
+            min={1}
+            placeholder="7"
+            value={form.durationDays}
+            onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Dung lượng (GB)</span>
+          <input
+            className={inputClass}
+            type="number"
+            min={0}
+            step="0.1"
+            placeholder="5"
+            value={form.dataAmountGb}
+            onChange={(e) => setForm({ ...form, dataAmountGb: Number(e.target.value) })}
+          />
+        </label>
         <button type="submit" className="btn-primary sm:col-span-2">
           Tạo gói
         </button>

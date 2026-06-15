@@ -126,12 +126,57 @@ export default function AdminCountriesPage() {
 
       <AdminWriteGate>
       <form onSubmit={(e) => void create(e)} className="card grid gap-3 p-4 sm:grid-cols-2">
-        <input className={inputClass} placeholder="Tên EN" value={form.name} required onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input className={inputClass} placeholder="Tên VI" value={form.nameVi} required onChange={(e) => setForm({ ...form, nameVi: e.target.value })} />
-        <input className={inputClass} placeholder="Mã (JP)" value={form.code} required onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
-        <input className={inputClass} placeholder="Slug" value={form.slug} required onChange={(e) => setForm({ ...form, slug: e.target.value })} />
-        <input className={inputClass} placeholder="Flag URL" value={form.flagUrl} onChange={(e) => setForm({ ...form, flagUrl: e.target.value })} />
-        <label className="flex items-center gap-2 text-sm">
+        <h2 className="sm:col-span-2 font-bold">Thêm quốc gia</h2>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Tên EN</span>
+          <input
+            className={inputClass}
+            placeholder="Japan"
+            value={form.name}
+            required
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Tên VI</span>
+          <input
+            className={inputClass}
+            placeholder="Nhật Bản"
+            value={form.nameVi}
+            required
+            onChange={(e) => setForm({ ...form, nameVi: e.target.value })}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Mã ISO</span>
+          <input
+            className={inputClass}
+            placeholder="JP"
+            value={form.code}
+            required
+            onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Slug</span>
+          <input
+            className={inputClass}
+            placeholder="nhat-ban"
+            value={form.slug}
+            required
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+        </label>
+        <label className="block text-sm sm:col-span-2">
+          <span className="mb-1 block text-xs font-bold text-slate-600">Flag URL</span>
+          <input
+            className={inputClass}
+            placeholder="https://..."
+            value={form.flagUrl}
+            onChange={(e) => setForm({ ...form, flagUrl: e.target.value })}
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" checked={form.isPopular} onChange={(e) => setForm({ ...form, isPopular: e.target.checked })} />
           Popular
         </label>

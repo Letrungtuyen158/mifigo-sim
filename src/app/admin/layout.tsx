@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { canAccessAdminPanel } from "@/lib/roles";
 import AdminSidebarNav from "@/components/admin/AdminSidebarNav";
+import AdminMobileNav from "@/components/admin/AdminMobileNav";
 import { AdminRoleProvider } from "@/contexts/AdminRoleContext";
 import { getSessionUser } from "@/lib/auth";
 
@@ -14,7 +15,7 @@ export default async function AdminLayout({
 
   return (
     <AdminRoleProvider role={user.role}>
-    <div className="admin-shell min-h-screen overflow-x-hidden bg-slate-100">
+    <div className="admin-shell min-h-screen overflow-x-hidden bg-slate-100 pb-20 lg:pb-0">
       <div className="border-b bg-white">
         <div className="container-page flex min-w-0 items-center justify-between gap-3 py-3">
           <div className="truncate font-black text-[#1d6be8]">Mifigo SIM Admin</div>
@@ -25,10 +26,8 @@ export default async function AdminLayout({
       </div>
 
       <div className="container-page min-w-0 py-4 sm:py-6 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-        <div className="admin-table-scroll -mx-1 mb-4 px-1 lg:hidden">
-          <div className="card p-2">
-            <AdminSidebarNav layout="horizontal" />
-          </div>
+        <div className="mb-4 min-w-0 lg:hidden">
+          <AdminMobileNav />
         </div>
 
         <aside className="card sticky top-3 hidden max-h-[calc(100vh-88px)] overflow-y-auto p-3 lg:block">

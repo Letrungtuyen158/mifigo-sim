@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useIsAdmin } from "@/contexts/AdminRoleContext";
 
@@ -67,20 +67,44 @@ function filterSections(sections: NavSection[], isAdmin: boolean): NavSection[] 
     .filter((section) => section.items.length > 0);
 }
 
+function NavLinkSpinner() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span
+      className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80"
+      aria-hidden
+    />
+  );
+}
+
+function NavLinkLabel({ label }: { label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <NavLinkSpinner />
+      <span className={pending ? "opacity-80" : undefined}>{label}</span>
+    </span>
+  );
+}
+
 function NavLink({
   item,
   pathname,
   horizontal,
+  onNavigate,
 }: {
   item: NavItem;
   pathname: string;
   horizontal: boolean;
+  onNavigate?: () => void;
 }) {
   const active = isActive(pathname, item.href, item.exact);
   return (
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
+      onClick={() => onNavigate?.()}
       className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
         horizontal ? "shrink-0 whitespace-nowrap" : ""
       } ${
@@ -89,15 +113,37 @@ function NavLink({
           : "text-slate-700 hover:bg-slate-100"
       }`}
     >
-      {item.label}
+      <NavLinkLabel label={item.label} />
+    </Link>
+  );
+}
+
+function BackToSiteLink({
+  horizontal,
+  onNavigate,
+}: {
+  horizontal: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <Link
+      href="/"
+      onClick={() => onNavigate?.()}
+      className={`rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 ${
+        horizontal ? "shrink-0 whitespace-nowrap" : ""
+      }`}
+    >
+      <NavLinkLabel label="← Về website" />
     </Link>
   );
 }
 
 export default function AdminSidebarNav({
   layout = "vertical",
+  onNavigate,
 }: {
   layout?: "vertical" | "horizontal";
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const isAdmin = useIsAdmin();
@@ -142,6 +188,7 @@ export default function AdminSidebarNav({
                 item={item}
                 pathname={pathname}
                 horizontal={horizontal}
+                onNavigate={onNavigate}
               />
             ))}
           </div>
@@ -154,14 +201,7 @@ export default function AdminSidebarNav({
         <hr className="my-2 border-slate-200" />
       )}
 
-      <Link
-        href="/"
-        className={`rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 ${
-          horizontal ? "shrink-0 whitespace-nowrap" : ""
-        }`}
-      >
-        ← Về website
-      </Link>
+      <BackToSiteLink horizontal={horizontal} onNavigate={onNavigate} />
     </nav>
   );
 }
